@@ -36,6 +36,7 @@ secrets/
 *.enc
 *.pfx
 acme.json          # Traefik Let's Encrypt certificates (contains secrets)
+**/acme.json
 *.token
 *.secret
 *.credentials
@@ -69,6 +70,7 @@ data/
 volumes/
 backups/
 logs/
+log/
 tmp/
 temp/
 cache/
@@ -76,10 +78,8 @@ cache/
 **/__pycache__/
 
 # Common named Docker volumes (optional)
-docker-data/portainer/
-docker-data/wgeasy/
-docker-data/traefik/config/acme.json
-docker-data/traefik/log/
+
+
 
 # -----------------------------
 # Certificates & WireGuard keys
@@ -96,7 +96,6 @@ wgeasy/peer-configs/
 # -----------------------------
 .docker/
 .dockerignore
-docker-*
 *.dockerfile
 !Dockerfile
 !docker-compose.yml
@@ -129,3 +128,4 @@ lost+found/
 # - Do NOT commit acme.json or .env with secrets.
 # - Use `docker-compose config` to verify environment merging.
 # - Back up volumes via dedicated backup scripts instead of git.
+# Ignore all Traefik ACME storages

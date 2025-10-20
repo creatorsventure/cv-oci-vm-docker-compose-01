@@ -1,0 +1,22 @@
+# dynamic.yml
+http:
+  middlewares:
+    secure-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        forceSTSHeader: true
+        sslRedirect: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        contentSecurityPolicy: "default-src 'self';"
+        referrerPolicy: "no-referrer-when-downgrade"
+
+    # Basic auth middleware for dashboard - replace the hashed password below
+    dashboard-auth:
+      basicAuth:
+        # Format: - "user:hashedpassword"
+        users:
+          - "admin:$2y$05$OVdvRW5DECOrN4.W2bh18eoI8Qgufr2UAO5YuXRLU9yYS4NAO3qp2"
