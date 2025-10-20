@@ -1,0 +1,100 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    profiles: ["infra"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - "${DOCKER_DATA_ROOT}/traefik-data/config:/etc/traefik:rw"
+      - "${DOCKER_DATA_ROOT}/traefik-data/config/acme.json:/acme.json"
+      - "${DOCKER_DATA_ROOT}/traefik-data/log:/var/log/traefik:rw"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ=${TZ:-UTC}
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - web
+    command:
+       - "--certificatesresolvers.le.acme.email=${EMAIL}"
+    labels:
+      - "traefik.enable=true"
+      # Dashboard router (routes to Traefik internal api)
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=le"
+      - "traefik.http.routers.traefik.service=api@internal"
+      # Attach file-provided middlewares (secure headers + basic auth)
+      - "traefik.http.routers.traefik.middlewares=dashboard-auth@file,secure-headers@file"
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    profiles: ["infra"]
+    restart: unless-stopped
+    volumes:
+      - "${DOCKER_DATA_ROOT}/portainer-data/config:/data:rw"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_HOST}`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=le"
+      - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file"
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  wg-easy:
+    image: weejewel/wg-easy
+    container_name: wg-easy
+    profiles: ["vpn"]
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      - WG_HOST=${WG_HOST}
+      - PASSWORD=${WG_ADMIN_PASS}
+    volumes:
+      - "${DOCKER_DATA_ROOT}/wgeasy-data/config:/etc/wireguard:rw"
+      - "${DOCKER_DATA_ROOT}/wgeasy-data/log:/var/log/wgeasy:rw"
+    ports:
+      - "51820:51820/udp"
+      - "51821:51821/tcp"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`${WG_HOST}`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=le"
+      - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file"
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD", "bash", "-c", "wg show || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+
+networks:
+  web:
+    driver: bridge

@@ -1,0 +1,131 @@
+# =========================================
+# .gitignore for Docker-based projects
+# =========================================
+
+# -----------------------------
+# OS & editor cruft
+# -----------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+*.lock
+*.orig
+*.env.local
+.idea/
+.vscode/
+*.code-workspace
+*.iml
+
+# -----------------------------
+# Environment / secrets files
+# -----------------------------
+.env
+.env.*
+!.env.example
+secrets/
+*.key
+*.pem
+*.crt
+*.csr
+*.enc
+*.pfx
+acme.json          # Traefik Let's Encrypt certificates (contains secrets)
+*.token
+*.secret
+*.credentials
+
+# -----------------------------
+# Docker build artifacts
+# -----------------------------
+*.pid
+*.seed
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+*.zip
+*.bak
+*.backup
+*.sql
+*.db
+*.sqlite
+
+# Docker Compose overrides (local dev configs)
+docker-compose.override.yml
+docker-compose.dev.yml
+docker-compose.test.yml
+docker-compose.local.yml
+
+# -----------------------------
+# Docker volumes, logs & temp
+# -----------------------------
+data/
+volumes/
+backups/
+logs/
+tmp/
+temp/
+cache/
+**/node_modules/
+**/__pycache__/
+
+# Common named Docker volumes (optional)
+docker-data/portainer/
+docker-data/wgeasy/
+docker-data/traefik/config/acme.json
+docker-data/traefik/log/
+
+# -----------------------------
+# Certificates & WireGuard keys
+# -----------------------------
+wgeasy/config/
+wgeasy/peers/
+wgeasy/peer-configs/
+*.conf
+*.wg0
+*.wg1
+
+# -----------------------------
+# Container runtime files
+# -----------------------------
+.docker/
+.dockerignore
+docker-*
+*.dockerfile
+!Dockerfile
+!docker-compose.yml
+
+# -----------------------------
+# Python / Node / Java artifacts (optional if you build images)
+# -----------------------------
+*.pyc
+__pycache__/
+dist/
+build/
+target/
+npm-debug.log
+yarn-error.log
+package-lock.json
+pnpm-lock.yaml
+.venv/
+venv/
+
+# -----------------------------
+# System-specific ignore (Linux)
+# -----------------------------
+lost+found/
+*.out
+
+# =========================================
+# Notes
+# =========================================
+# - Keep env.example with sanitized values under version control.
+# - Do NOT commit acme.json or .env with secrets.
+# - Use `docker-compose config` to verify environment merging.
+# - Back up volumes via dedicated backup scripts instead of git.
