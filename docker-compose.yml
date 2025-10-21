@@ -48,11 +48,14 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_HOST}`)"
+      - 'traefik.http.routers.portainer.rule=Host(`${PORTAINER_HOST}`)'
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls=true"
       - "traefik.http.routers.portainer.tls.certresolver=le"
-      - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file"
+      # Explicit server port inside the container (Portainer default is 9000)
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      # Add middlewares (make sure they exist in dynamic.yml)
+      - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file,dashboard-auth@file"
     networks:
       - web
     healthcheck:
@@ -74,23 +77,31 @@ services:
     environment:
       - WG_HOST=${WG_HOST}
       - PASSWORD=${WG_ADMIN_PASS}
+      # Optional: set WG_PORT if you want a non-default inside container
+      # - WG_PORT=51820
     volumes:
       - "${DOCKER_DATA_ROOT}/wgeasy-data/config:/etc/wireguard:rw"
       - "${DOCKER_DATA_ROOT}/wgeasy-data/log:/var/log/wgeasy:rw"
+    # expose UDP WireGuard port on host (required)
     ports:
       - "51820:51820/udp"
-      - "51821:51821/tcp"
+    # do NOT publish 51821: let Traefik serve the UI via HTTPs instead
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.portainer.rule=Host(`${WG_HOST}`)"
-      - "traefik.http.routers.portainer.entrypoints=websecure"
-      - "traefik.http.routers.portainer.tls=true"
-      - "traefik.http.routers.portainer.tls.certresolver=le"
-      - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file"
+      # Route UI via Traefik; host uses your VPN domain (WG_HOST)
+      - 'traefik.http.routers.wgeasy.rule=Host(`${WG_HOST}`)'
+      - 'traefik.http.routers.wgeasy.entrypoints=websecure'
+      - 'traefik.http.routers.wgeasy.tls=true'
+      - 'traefik.http.routers.wgeasy.tls.certresolver=le'
+      # tell Traefik which internal port to talk to for HTTP UI (wg-easy uses 51821)
+      - "traefik.http.services.wgeasy.loadbalancer.server.port=51821"
+      # apply your standard middlewares (adjust names as needed)
+      - "traefik.http.routers.wgeasy.middlewares=secure-headers@file,rate-limit@file,dashboard-auth@file"
     networks:
       - web
     healthcheck:
-      test: ["CMD", "bash", "-c", "wg show || exit 1"]
+      # prefer HTTP healthcheck against the UI if present
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:51821/ || exit 1"]
       interval: 60s
       timeout: 5s
       retries: 3
