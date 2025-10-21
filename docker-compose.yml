@@ -24,7 +24,7 @@ services:
     networks:
       - web
     command:
-       - "--certificatesresolvers.le.acme.email=${EMAIL}"
+        - "--certificatesresolvers.le.acme.email=${EMAIL}"
     labels:
       - "traefik.enable=true"
       # Dashboard router (routes to Traefik internal api)
