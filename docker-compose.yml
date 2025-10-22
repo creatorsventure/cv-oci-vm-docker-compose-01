@@ -65,7 +65,7 @@ services:
       disable: true
 
   wg-easy:
-    image: weejewel/wg-easy
+    image: ghcr.io/wg-easy/wg-easy
     container_name: wg-easy
     # profiles: ["vpn"]
     restart: unless-stopped
