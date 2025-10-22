@@ -5,7 +5,7 @@ services:
   traefik:
     image: traefik:latest
     container_name: traefik
-    profiles: [ "infra" ]
+    profiles: ["infra"]
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -20,7 +20,7 @@ services:
     environment:
       - TZ=${TZ:-UTC}
     healthcheck:
-      test: [ "CMD", "traefik", "healthcheck" ]
+      test: ["CMD", "traefik", "healthcheck"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,7 +38,83 @@ services:
       - "traefik.http.routers.traefik.service=api@internal"
       # Attach file-provided middlewares (secure headers + basic auth)
       - "traefik.http.routers.traefik.middlewares=dashboard-auth@file,secure-headers@file"
-      
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    profiles: ["infra"]
+    restart: unless-stopped
+    depends_on:
+      - traefik
+    volumes:
+      - "${DOCKER_DATA_ROOT}/portainer-data/config:/data:rw"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_HOST}`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=le"
+      # Explicit server port inside the container (Portainer default is 9000)
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      # Add middlewares (make sure they exist in dynamic.yml)
+      - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file,dashboard-auth@file"
+    networks:
+      - web
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:9000 || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  wg-easy:
+    image: weejewel/wg-easy
+    container_name: wg-easy
+    profiles: ["vpn"]
+    restart: unless-stopped
+    depends_on:
+      - traefik
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      - WG_HOST=${WG_HOST}
+      - PASSWORD=${WG_ADMIN_PASS}
+      # Optional: set WG_PORT if you want a non-default inside container
+      # - WG_PORT=51820
+    volumes:
+      - "${DOCKER_DATA_ROOT}/wgeasy-data/config:/etc/wireguard:rw"
+      - "${DOCKER_DATA_ROOT}/wgeasy-data/log:/var/log/wgeasy:rw"
+    # expose UDP WireGuard port on host (required)
+    ports:
+      - "51820:51820/udp"
+    # do NOT publish 51821: let Traefik serve the UI via HTTPs instead
+    labels:
+      - "traefik.enable=true"
+      # Route UI via Traefik; host uses your VPN domain (WG_HOST)
+      - "traefik.http.routers.wgeasy.rule=Host(`${WG_HOST}`)"
+      - "traefik.http.routers.wgeasy.entrypoints=websecure"
+      - "traefik.http.routers.wgeasy.tls=true"
+      - "traefik.http.routers.wgeasy.tls.certresolver=le"
+      # tell Traefik which internal port to talk to for HTTP UI (wg-easy uses 51821)
+      - "traefik.http.services.wgeasy.loadbalancer.server.port=51821"
+      # apply your standard middlewares (adjust names as needed)
+      - "traefik.http.routers.wgeasy.middlewares=secure-headers@file,rate-limit@file,dashboard-auth@file"
+    networks:
+      - web
+    healthcheck:
+      # prefer HTTP healthcheck against the UI if present
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:51821/ || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+
 networks:
   web:
     driver: bridge
