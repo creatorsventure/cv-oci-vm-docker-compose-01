@@ -10,6 +10,26 @@ sudo apt update && sudo apt install -y apache2-utils
 htpasswd -nbB admin 'SuperSecretPassword'
 ```
 
+# 2. WG Easy Ubuntu VM Configuration
+
+```bash
+# Enable IP forwarding on the host
+vi /etc/sysctl.conf
+# uncomment or add below props
+net.ipv4.ip_forward=1
+net.ipv6.conf.all.forwarding=1
+
+# Apply & verify the config change
+sudo sysctl -p
+sysctl net.ipv4.ip_forward
+sysctl net.ipv6.conf.all.forwarding
+
+
+# Updating IP tables
+sudo iptables -t nat -A POSTROUTING -s 10.9.0.0/24 -o enp0s6 -j MASQUERADE
+sudo netfilter-persistent save
+
+```
 
 ---
 # 💫 About Me:
