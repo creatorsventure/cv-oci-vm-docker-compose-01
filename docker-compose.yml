@@ -1,3 +1,4 @@
+name: cv-base-services
 services:
   traefik:
     image: traefik:latest
