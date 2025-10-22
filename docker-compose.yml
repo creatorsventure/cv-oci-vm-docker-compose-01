@@ -78,7 +78,7 @@ services:
       - net.ipv4.conf.all.src_valid_mark=1
     environment:
       - WG_HOST=${WG_HOST}
-      - PASSWORD=${WG_ADMIN_PASS}
+      - PASSWORD_HASH=${WG_ADMIN_PASS}
       # Optional: set WG_PORT if you want a non-default inside container
       # - WG_PORT=51820
     volumes:
