@@ -95,7 +95,7 @@ services:
       - "traefik.http.routers.wgeasy.tls=true"
       - "traefik.http.routers.wgeasy.tls.certresolver=le"
       - "traefik.http.services.wgeasy.loadbalancer.server.port=51821"
-      - "traefik.http.routers.wgeasy.middlewares=secure-headers-lite@filerate-limit@file"
+      - "traefik.http.routers.wgeasy.middlewares=secure-headers-lite@file,rate-limit@file"
     networks:
       - web
     healthcheck:
