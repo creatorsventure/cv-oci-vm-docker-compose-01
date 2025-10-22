@@ -13,6 +13,8 @@ htpasswd -nbB admin 'SuperSecretPassword'
 # 2. WG Easy Ubuntu VM Configuration
 
 ```bash
+# Optional steps if the default is not working
+
 # Enable IP forwarding on the host
 vi /etc/sysctl.conf
 # uncomment or add below props
@@ -27,6 +29,23 @@ sysctl net.ipv6.conf.all.forwarding
 
 # Updating IP tables
 sudo iptables -t nat -A POSTROUTING -s 10.9.0.0/24 -o enp0s6 -j MASQUERADE
+
+# allow established/related replies (good to have)
+sudo iptables -I FORWARD 1 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# allow outbound from VPN subnet to your uplink
+sudo iptables -I FORWARD 1 -s 10.9.0.0/24 -o enp0s6 -j ACCEPT
+
+# allow inbound replies from uplink back to VPN subnet
+sudo iptables -I FORWARD 1 -d 10.9.0.0/24 -i enp0s6 -j ACCEPT
+
+# allow Docker to accept VPN-origin traffic early (DOCKER-USER)
+sudo iptables -I DOCKER-USER 1 -s 10.9.0.0/24 -j ACCEPT
+
+# Verify
+sudo iptables -t nat -L POSTROUTING -n -v | grep MASQUERADE
+
+# Save
 sudo netfilter-persistent save
 
 ```
