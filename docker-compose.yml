@@ -5,7 +5,7 @@ services:
   traefik:
     image: traefik:latest
     container_name: traefik
-    profiles: ["infra"]
+    # profiles: ["infra"] # docker compose --profile infra config/up etc
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -20,7 +20,7 @@ services:
     environment:
       - TZ=${TZ:-UTC}
     healthcheck:
-      test: ["CMD", "traefik", "healthcheck"]
+      test: [ "CMD", "traefik", "healthcheck" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -42,7 +42,7 @@ services:
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
-    profiles: ["infra"]
+    # profiles: ["infra"]
     restart: unless-stopped
     depends_on:
       - traefik
@@ -62,11 +62,7 @@ services:
     networks:
       - web
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --quiet --tries=1 --spider http://localhost:9000 || exit 1",
-        ]
+      test: [ "CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9000 || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -74,7 +70,7 @@ services:
   wg-easy:
     image: weejewel/wg-easy
     container_name: wg-easy
-    profiles: ["vpn"]
+    # profiles: ["vpn"]
     restart: unless-stopped
     depends_on:
       - traefik
@@ -110,7 +106,7 @@ services:
       - web
     healthcheck:
       # prefer HTTP healthcheck against the UI if present
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:51821/ || exit 1"]
+      test: [ "CMD-SHELL", "curl -fsS http://127.0.0.1:51821/ || exit 1" ]
       interval: 60s
       timeout: 5s
       retries: 3
