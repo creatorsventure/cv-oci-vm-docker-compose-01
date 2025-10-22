@@ -89,14 +89,13 @@ services:
       - "51820:51820/udp"
     # do NOT publish 51821: let Traefik serve the UI via HTTPs instead
     labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.wgeasy.rule=Host("${WG_HOST}")'
-      - 'traefik.http.routers.wgeasy.entrypoints=websecure'
-      - 'traefik.http.routers.wgeasy.tls=true'
-      - 'traefik.http.routers.wgeasy.tls.certresolver=le'
-      - 'traefik.http.services.wgeasy.loadbalancer.server.port=51821'
-      - 'traefik.docker.network=web'
-      - 'traefik.http.routers.wgeasy.middlewares=secure-headers-lite@file,rate-limit@file'
+      - "traefik.enable=true"
+      - "traefik.http.routers.wgeasy.rule=Host(`${WG_HOST}`)"
+      - "traefik.http.routers.wgeasy.entrypoints=websecure"
+      - "traefik.http.routers.wgeasy.tls=true"
+      - "traefik.http.routers.wgeasy.tls.certresolver=le"
+      - "traefik.http.services.wgeasy.loadbalancer.server.port=51821"
+      - "traefik.http.routers.wgeasy.middlewares="
     networks:
       - web
     healthcheck:
