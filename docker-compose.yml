@@ -104,6 +104,56 @@ services:
       # prefer HTTP healthcheck against the UI if present
       disable: true
 
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    restart: unless-stopped
+    depends_on:
+      - traefik
+      - wg-easy
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: fog
+      MYSQL_USER: fog
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ${DOCKER_DATA_ROOT}/mariadb-data/data:/var/lib/mysql:rw
+      - ${DOCKER_DATA_ROOT}/mariadb-data/config/maria.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ${DOCKER_DATA_ROOT}/mariadb-data/backups:/backups:rw
+      - ${DOCKER_DATA_ROOT}/mariadb-data/initdb:/docker-entrypoint-initdb.d:ro
+      - ${DOCKER_DATA_ROOT}/mariadb-data/log:/var/log/mysql
+    tmpfs:
+      - /var/run
+      - /var/lib/mysqltmp
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  plex:
+    image: plexinc/pms-docker:latest
+    container_name: plex
+    network_mode: host   # Required for DLNA, Chromecast, discovery, etc.
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Muscat
+      - PLEX_CLAIM=claim-xxxxxxxxxxxxxxxx  # Get from https://plex.tv/claim (valid 4 mins)
+      - ADVERTISE_IP=http://<your-server-ip>:32400/
+      - HOSTNAME=plex-server
+      - PLEX_UID=1000
+      - PLEX_GID=1000
+    volumes:
+      - ${DOCKER_DATA_ROOT}/plex-data/config:/config
+      - ${DOCKER_DATA_ROOT}/plex-data/transcode:/transcode
+      - ${DOCKER_DATA_ROOT}/plex-data/media:/data
+    #devices: # for gpu passthrew
+      #- /dev/dri:/dev/dri
+
 networks:
   web:
     driver: bridge
