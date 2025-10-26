@@ -143,7 +143,7 @@ services:
     restart: unless-stopped
     depends_on:
      - traefik
-     - wgeasy
+     - wg-easy
     environment:
       - TZ=Asia/Muscat
       - PLEX_CLAIM=claim-5M3zxr3q1moqx4gsnd6k # Get from https://plex.tv/claim (valid 4 mins)
