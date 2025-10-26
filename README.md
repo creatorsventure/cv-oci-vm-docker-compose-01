@@ -45,6 +45,13 @@ sudo iptables -I DOCKER-USER 1 -s 10.9.0.0/24 -j ACCEPT
 # Verify
 sudo iptables -t nat -L POSTROUTING -n -v | grep MASQUERADE
 
+# If the network mode is host mode
+# allow traffic from the Docker subnet (172.18.0.0/16) to host TCP 51821
+sudo iptables -I INPUT 1 -p tcp -s 172.18.0.0/16 --dport 51821 -j ACCEPT
+
+# verify the rule is present
+sudo iptables -L INPUT -n --line-numbers | sed -n '1,200p'
+
 # Save
 sudo netfilter-persistent save
 
