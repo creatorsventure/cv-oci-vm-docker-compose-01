@@ -28,6 +28,8 @@ services:
       - web
     command:
       - "--certificatesresolvers.le.acme.email=${EMAIL}"
+    extra_hosts: # To manage host network mode container accessiblity
+      - "host.docker.internal:host-gateway"
     labels:
       - "traefik.enable=true"
       # Dashboard router (routes to Traefik internal api)
@@ -109,7 +111,7 @@ services:
     environment:
       - WG_HOST=${WG_HOST}
       - PASSWORD_HASH=${WG_ADMIN_PASS}
-      - WG_DEFAULT_ADDRESS=10.9.0.x
+      - WG_DEFAULT_ADDRESS=10.9.9.0/24
       - WG_DEFAULT_DNS=1.1.1.1
       # Optional: set WG_PORT if you want a non-default inside container
       # - WG_PORT=51820
