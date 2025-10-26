@@ -13,7 +13,7 @@ htpasswd -nbB admin 'SuperSecretPassword'
 # 2. WG Easy Ubuntu VM Configuration
 
 ```bash
-# Optional steps if the default is not working
+# Note the container should be in host mode for better networking capabilities
 
 # Enable IP forwarding on the host
 vi /etc/sysctl.conf
@@ -28,32 +28,39 @@ sysctl net.ipv6.conf.all.forwarding
 
 
 # Updating IP tables
-sudo iptables -t nat -A POSTROUTING -s 10.9.0.0/24 -o enp0s6 -j MASQUERADE
 
-# allow established/related replies (good to have)
-sudo iptables -I FORWARD 1 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    # Flush and delete everything -- Optional
+        sudo iptables -F
+        sudo iptables -X
+        sudo iptables -t nat -F
+        sudo iptables -t nat -X
+        sudo iptables -t mangle -F
+        sudo iptables -t mangle -X
+        sudo iptables -t raw -F
+        sudo iptables -t raw -X
 
-# allow outbound from VPN subnet to your uplink
-sudo iptables -I FORWARD 1 -s 10.9.0.0/24 -o enp0s6 -j ACCEPT
+        # Reset policies to ACCEPT (temporarily)
+        sudo iptables -P INPUT ACCEPT
+        sudo iptables -P FORWARD ACCEPT
+        sudo iptables -P OUTPUT ACCEPT
 
-# allow inbound replies from uplink back to VPN subnet
-sudo iptables -I FORWARD 1 -d 10.9.0.0/24 -i enp0s6 -j ACCEPT
+        # Restart Docker to rebuild its required rules
+        sudo systemctl restart docker
 
-# allow Docker to accept VPN-origin traffic early (DOCKER-USER)
-sudo iptables -I DOCKER-USER 1 -s 10.9.0.0/24 -j ACCEPT
+# View Rules
+sudo iptables -L FORWARD -v -n
+sudo iptables -t nat -L POSTROUTING -v -n
 
-# Verify
-sudo iptables -t nat -L POSTROUTING -n -v | grep MASQUERADE
+# Allow traffic between VPN (wg0) and Internet interface (enp0s6)
+sudo iptables -A FORWARD -i wg0 -o enp0s6 -j ACCEPT
+sudo iptables -A FORWARD -i enp0s6 -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
-# If the network mode is host mode
-# allow traffic from the Docker subnet (172.18.0.0/16) to host TCP 51821
-sudo iptables -I INPUT 1 -p tcp -s 172.18.0.0/16 --dport 51821 -j ACCEPT
+# Add NAT (for VPN client internet access)
+sudo iptables -t nat -A POSTROUTING -s 10.9.9.0/24 -o enp0s6 -j MASQUERADE
 
-# verify the rule is present
-sudo iptables -L INPUT -n --line-numbers | sed -n '1,200p'
-
-# Save
+# Save & Reload
 sudo netfilter-persistent save
+sudo netfilter-persistent reload
 
 ```
 
