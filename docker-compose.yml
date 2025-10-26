@@ -28,8 +28,7 @@ services:
       - web
     command:
       - "--certificatesresolvers.le.acme.email=${EMAIL}"
-    extra_hosts:
-      # To manage host network mode container accessiblity
+    extra_hosts: # To manage host network mode container accessiblity
       - "host.docker.internal:host-gateway"
     labels:
       - "traefik.enable=true"
@@ -107,7 +106,7 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
-      #sysctls: # Enable if bridge network mode used 
+    #sysctls: # Enable if bridge network mode used 
       #- net.ipv4.conf.all.src_valid_mark=1
     environment:
       - WG_HOST=${WG_HOST}
@@ -119,10 +118,10 @@ services:
     volumes:
       - "${DOCKER_DATA_ROOT}/wgeasy-data/config:/etc/wireguard:rw"
       - "${DOCKER_DATA_ROOT}/wgeasy-data/log:/var/log/wgeasy:rw"
-      # expose UDP WireGuard port on host (required)
-      #ports: # Enable if bridge network mode used because host mode automatically bind
+    # expose UDP WireGuard port on host (required)
+    #ports: # Enable if bridge network mode used because host mode automatically bind
       #- "51820:51820/udp"
-      # do NOT publish 51821: let Traefik serve the UI via HTTPs instead
+    # do NOT publish 51821: let Traefik serve the UI via HTTPs instead
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.wgeasy.rule=Host(`${WG_HOST}`)"
@@ -144,8 +143,8 @@ services:
     restart: unless-stopped
     environment:
       - TZ=Asia/Muscat
-      - PLEX_CLAIM=claim-DnU5uzsTt362iJZrwsPu # Get from https://plex.tv/claim (valid 4 mins)
-      - ADVERTISE_IP=http://10.9.9.9:32400/,https://plex.oci.creatorsventure.com:32400/
+      - PLEX_CLAIM=claim-5M3zxr3q1moqx4gsnd6k # Get from https://plex.tv/claim (valid 4 mins)
+      - ADVERTISE_IP=http://10.9.9.1:32400/,https://plex.oci.creatorsventure.com:32400/
       - HOSTNAME=plex-server
       - PLEX_UID=1000
       - PLEX_GID=1000
@@ -153,8 +152,18 @@ services:
       - ${DOCKER_DATA_ROOT}/plex-data/config:/config
       - ${DOCKER_DATA_ROOT}/plex-data/transcode:/transcode
       - ${DOCKER_DATA_ROOT}/plex-data/media:/data
-      #devices: # for gpu passthrew
+    #devices: # for gpu passthrew
       #- /dev/dri:/dev/dri
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.plex.rule=Host(`${PLEX_HOST}`)"
+    - "traefik.http.routers.plex.entrypoints=websecure"
+    - "traefik.http.routers.plex.tls=true"
+    - "traefik.http.routers.plex.tls.certresolver=le"
+    # proxy to the host's plex port
+    - "traefik.http.services.plex.loadbalancer.server.url=http://host.docker.internal:32400"
+    # optional: add middlewares (basic auth, secure headers) if you want
+    - "traefik.http.routers.plex.middlewares=secure-headers@file,rate-limit@file"
 
 networks:
   web:
