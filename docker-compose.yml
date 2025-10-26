@@ -104,8 +104,8 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
-    sysctls:
-      - net.ipv4.conf.all.src_valid_mark=1
+    #sysctls: # Enable if bridge network mode used 
+      #- net.ipv4.conf.all.src_valid_mark=1
     environment:
       - WG_HOST=${WG_HOST}
       - PASSWORD_HASH=${WG_ADMIN_PASS}
@@ -117,8 +117,8 @@ services:
       - "${DOCKER_DATA_ROOT}/wgeasy-data/config:/etc/wireguard:rw"
       - "${DOCKER_DATA_ROOT}/wgeasy-data/log:/var/log/wgeasy:rw"
     # expose UDP WireGuard port on host (required)
-    ports:
-      - "51820:51820/udp"
+    #ports: # Enable if bridge network mode used because host mode automatically bind
+      #- "51820:51820/udp"
     # do NOT publish 51821: let Traefik serve the UI via HTTPs instead
     labels:
       - "traefik.enable=true"
