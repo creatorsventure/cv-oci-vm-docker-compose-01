@@ -9,11 +9,44 @@ sudo apt update && sudo apt install -y apache2-utils
 # generate bcrypt htpasswd line (no file)
 htpasswd -nbB admin 'SuperSecretPassword'
 ```
-
-# 2. WG Easy Ubuntu VM Configuration
+# 2. Ubuntu VM Setup
 
 ```bash
-# Note the container should be in host mode for better networking capabilities
+
+# Update and Upgrade System Packages
+sudo apt update && sudo apt upgrade -y
+sudo apt autoremove -y
+sudo apt clean
+
+# Install Core Utilities & Build Tools
+sudo apt install -y curl wget git unzip zip tar htop net-tools dnsutils lsof
+
+sudo apt install -y software-properties-common apt-transport-https ca-certificates uild-essential pkg-config
+
+sudo apt install -y vim nano tmux tree jq nmap sysstat screen ufw neofetch
+
+# Install Fail2ban (protect from brute-force SSH)
+sudo apt install -y fail2ban
+sudo systemctl enable --now fail2ban
+
+# Enable UFW 
+sudo ufw status
+sudo ufw enable
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow OpenSSH
+sudo ufw status verbose
+
+# To view rules
+sudo ufw status numbered
+
+# Rules
+sudo ufw allow 32400/tcp     # Plex
+sudo ufw allow 80,443/tcp    # HTTP/HTTPS
+sudo ufw allow 51820/udp     # WireGuard
+sudo ufw allow 51821/tcp    # WireGuard - HTTP page
+sudo ufw route allow in on wg0 out on enp0s6 # WireGuard NAT
+sudo ufw route allow in on enp0s6 out on wg0 # WireGuard NAT
 
 # Enable IP forwarding on the host
 vi /etc/sysctl.conf
@@ -21,46 +54,48 @@ vi /etc/sysctl.conf
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 
+# Save file
+
+sudo vi /etc/ufw/before.rules
+# NAT for WireGuard VPN
+*nat
+:POSTROUTING ACCEPT [0:0]
+
+# Masquerade traffic from WireGuard clients through the main network interface
+-A POSTROUTING -s 10.9.9.0/24 -o enp0s6 -j MASQUERADE
+
+COMMIT
+
+# Save file
+
+# Reload firewall
+sudo ufw reload
+
 # Apply & verify the config change
 sudo sysctl -p
 sysctl net.ipv4.ip_forward
 sysctl net.ipv6.conf.all.forwarding
 
+# Dcoker Setup 
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y ca-certificates curl gnupg lsb-release
 
-# Updating IP tables
+sudo apt remove docker docker-engine docker.io containerd runc -y
 
-    # Flush and delete everything -- Optional
-        sudo iptables -F
-        sudo iptables -X
-        sudo iptables -t nat -F
-        sudo iptables -t nat -X
-        sudo iptables -t mangle -F
-        sudo iptables -t mangle -X
-        sudo iptables -t raw -F
-        sudo iptables -t raw -X
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
-        # Reset policies to ACCEPT (temporarily)
-        sudo iptables -P INPUT ACCEPT
-        sudo iptables -P FORWARD ACCEPT
-        sudo iptables -P OUTPUT ACCEPT
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-        # Restart Docker to rebuild its required rules
-        sudo systemctl restart docker
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-# View Rules
-sudo iptables -L FORWARD -v -n
-sudo iptables -t nat -L POSTROUTING -v -n
+sudo systemctl enable --now docker
 
-# Allow traffic between VPN (wg0) and Internet interface (enp0s6)
-sudo iptables -A FORWARD -i wg0 -o enp0s6 -j ACCEPT
-sudo iptables -A FORWARD -i enp0s6 -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo docker run hello-world
 
-# Add NAT (for VPN client internet access)
-sudo iptables -t nat -A POSTROUTING -s 10.9.9.0/24 -o enp0s6 -j MASQUERADE
-
-# Save & Reload
-sudo netfilter-persistent save
-sudo netfilter-persistent reload
+# Run Docker without sudo
+sudo usermod -aG docker $USER
 
 ```
 
