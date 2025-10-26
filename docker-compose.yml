@@ -141,10 +141,13 @@ services:
     container_name: plex
     network_mode: host # Required for DLNA, Chromecast, discovery, etc.
     restart: unless-stopped
+    depends_on:
+     - traefik
+     - wgeasy
     environment:
       - TZ=Asia/Muscat
       - PLEX_CLAIM=claim-5M3zxr3q1moqx4gsnd6k # Get from https://plex.tv/claim (valid 4 mins)
-      - ADVERTISE_IP=http://10.9.9.1:32400/,https://plex.oci.creatorsventure.com:32400/
+      - ADVERTISE_IP=http://10.9.9.1:32400/,http://10.20.20.102:32400/,https://plex.oci.creatorsventure.com:32400/
       - HOSTNAME=plex-server
       - PLEX_UID=1000
       - PLEX_GID=1000
@@ -162,6 +165,7 @@ services:
     - "traefik.http.routers.plex.tls.certresolver=le"
     # proxy to the host's plex port
     - "traefik.http.services.plex.loadbalancer.server.url=http://host.docker.internal:32400"
+    - "traefik.http.middlewares.plex-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
     # optional: add middlewares (basic auth, secure headers) if you want
     - "traefik.http.routers.plex.middlewares=rate-limit@file"
 
