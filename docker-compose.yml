@@ -163,7 +163,7 @@ services:
     # proxy to the host's plex port
     - "traefik.http.services.plex.loadbalancer.server.url=http://host.docker.internal:32400"
     # optional: add middlewares (basic auth, secure headers) if you want
-    - "traefik.http.routers.plex.middlewares=secure-headers@file,rate-limit@file"
+    - "traefik.http.routers.plex.middlewares=rate-limit@file"
 
 networks:
   web:
