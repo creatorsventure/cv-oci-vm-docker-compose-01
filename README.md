@@ -107,6 +107,24 @@ sudo docker run hello-world
 # Run Docker without sudo
 sudo usermod -aG docker $USER
 
+
+# Storage Disk setup for media - optional
+
+lsblk
+sudo mkfs.ext4 /dev/sdb
+sudo mkdir /mnt/cv-blkvol-01
+
+sudo blkid /dev/sdb
+ # OUTPUT: /dev/sdb: UUID="7d414b70-344d-44c7-b6ec-c3156cbea82b" BLOCK_SIZE="4096" TYPE="ext4"
+
+sudo vi /etc/fstab
+#Add below and save
+UUID=7d414b70-344d-44c7-b6ec-c3156cbea82b  /mnt/cv-blkvol-01  ext4  defaults,nofail  0  2
+sudo mount -a
+# Change owner and permission so that the containers can write
+sudo chown -R 1001:1001 /mnt/cv-blkvol-01/
+sudo chmod -R 775 /mnt/cv-blkvol-01
+
 ```
 
 ---

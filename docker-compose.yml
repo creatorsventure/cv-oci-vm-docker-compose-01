@@ -28,7 +28,8 @@ services:
       - web
     command:
       - "--certificatesresolvers.le.acme.email=${EMAIL}"
-    extra_hosts: # To manage host network mode container accessiblity
+    extra_hosts:
+      # To manage host network mode container accessiblity
       - "host.docker.internal:host-gateway"
     labels:
       - "traefik.enable=true"
@@ -106,7 +107,7 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
-    #sysctls: # Enable if bridge network mode used 
+      #sysctls: # Enable if bridge network mode used 
       #- net.ipv4.conf.all.src_valid_mark=1
     environment:
       - WG_HOST=${WG_HOST}
@@ -118,10 +119,10 @@ services:
     volumes:
       - "${DOCKER_DATA_ROOT}/wgeasy-data/config:/etc/wireguard:rw"
       - "${DOCKER_DATA_ROOT}/wgeasy-data/log:/var/log/wgeasy:rw"
-    # expose UDP WireGuard port on host (required)
-    #ports: # Enable if bridge network mode used because host mode automatically bind
+      # expose UDP WireGuard port on host (required)
+      #ports: # Enable if bridge network mode used because host mode automatically bind
       #- "51820:51820/udp"
-    # do NOT publish 51821: let Traefik serve the UI via HTTPs instead
+      # do NOT publish 51821: let Traefik serve the UI via HTTPs instead
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.wgeasy.rule=Host(`${WG_HOST}`)"
@@ -142,8 +143,8 @@ services:
     network_mode: host # Required for DLNA, Chromecast, discovery, etc.
     restart: unless-stopped
     depends_on:
-     - traefik
-     - wg-easy
+      - traefik
+      - wg-easy
     environment:
       - TZ=${TZ}
       - PLEX_CLAIM=claim-fZeoxKyRqhHG3H6tqzzs # Get from https://plex.tv/claim (valid 4 mins)
@@ -155,29 +156,29 @@ services:
       - ${DOCKER_DATA_ROOT}/plex-data/config:/config
       - ${DOCKER_DATA_ROOT}/plex-data/transcode:/transcode
       - ${MEDIA_DATA_ROOT}/qbit-data/downloads:/data
-    #devices: # for gpu passthrew
+      #devices: # for gpu passthrew
       #- /dev/dri:/dev/dri
     labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.plex.rule=Host(`${PLEX_HOST}`)"
-    - "traefik.http.routers.plex.entrypoints=websecure"
-    - "traefik.http.routers.plex.tls=true"
-    - "traefik.http.routers.plex.tls.certresolver=le"
-    # proxy to the host's plex port
-    - "traefik.http.services.plex.loadbalancer.server.url=http://host.docker.internal:32400"
-    - "traefik.http.middlewares.plex-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-    # optional: add middlewares (basic auth, secure headers) if you want
-    - "traefik.http.routers.plex.middlewares=rate-limit@file"
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex.rule=Host(`${PLEX_HOST}`)"
+      - "traefik.http.routers.plex.entrypoints=websecure"
+      - "traefik.http.routers.plex.tls=true"
+      - "traefik.http.routers.plex.tls.certresolver=le"
+      # proxy to the host's plex port
+      - "traefik.http.services.plex.loadbalancer.server.url=http://host.docker.internal:32400"
+      - "traefik.http.middlewares.plex-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      # optional: add middlewares (basic auth, secure headers) if you want
+      - "traefik.http.routers.plex.middlewares=rate-limit@file"
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
     restart: unless-stopped
     environment:
-      - PUID=1001              # your user id (host)
-      - PGID=1001              # your group id (host)
-      - TZ=${TZ}               # set your timezone
-      - WEBUI_PORT=8080        # internal webui port
+      - PUID=1001 # your user id (host)
+      - PGID=1001 # your group id (host)
+      - TZ=${TZ} # set your timezone
+      - WEBUI_PORT=8080 # internal webui port
       # - UMASK_SET=022        # optional
       # - QBITTORRENT_WEBUI_PORT=8080  # alternate var name older images
     volumes:
@@ -188,8 +189,8 @@ services:
     # If you use docker's host network + direct port exposure:
     # network_mode: "host"
     ports:
-      - "6881:6881"        # bittorrent TCP
-      - "6881:6881/udp"    # bittorrent UDP (DHT/uTP)
+      - "6881:6881" # bittorrent TCP
+      - "6881:6881/udp" # bittorrent UDP (DHT/uTP)
     networks:
       - web
     # Traefik v2 labels (if you use Traefik as reverse proxy)
@@ -204,6 +205,30 @@ services:
       # Basic auth (optional) -> create user:pass with `htpasswd -nb user pass` then use the base64
       # - "traefik.http.routers.qbittorrent.middlewares=auth"
       # - "traefik.http.middlewares.auth.basicauth.users=USER:HASHEDPASSWORD"
+
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    user: "1001:1001" # adjust to your download folder owner
+    restart: unless-stopped
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=${TZ}
+    volumes:
+      - ${DOCKER_DATA_ROOT}/filebrowser-data/config:/config
+      - ${FILE_BROWSER_DATA_01}:/srv/data-01 # your mounted media drive path
+      - ${FILE_BROWSER_DATA_02}:/srv/data-02
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.filebrowser.rule=Host(`${FILE_BROWSER_HOST}`)"
+      - "traefik.http.routers.filebrowser.entrypoints=websecure"
+      - "traefik.http.routers.filebrowser.tls=true"
+      - "traefik.http.routers.filebrowser.tls.certresolver=le"
+      - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
+      - "traefik.http.routers.filebrowser.middlewares=rate-limit@file"
+    networks:
+      - web
 
 networks:
   web:
