@@ -217,6 +217,7 @@ services:
       - TZ=${TZ}
     volumes:
       - ${DOCKER_DATA_ROOT}/filebrowser-data/config:/config
+      - ${DOCKER_DATA_ROOT}/filebrowser-data/database:/database
       - ${FILE_BROWSER_DATA_01}:/srv/data-01 # your mounted media drive path
       - ${FILE_BROWSER_DATA_02}:/srv/data-02
     labels:
