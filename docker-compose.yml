@@ -148,7 +148,7 @@ services:
     environment:
       - TZ=${TZ}
       - PLEX_CLAIM=claim-fZeoxKyRqhHG3H6tqzzs # Get from https://plex.tv/claim (valid 4 mins)
-      - ADVERTISE_IP=http://10.9.9.1:32400/,http://10.20.20.102:32400/,https://plex.oci.creatorsventure.com:32400/
+      - ADVERTISE_IP=http://10.9.9.1:32400/,http://10.20.20.148:32400/,https://plex.oci.creatorsventure.com:32400/
       - HOSTNAME=plex-server
       - PLEX_UID=${HOST_UID}
       - PLEX_GID=${HOST_GID}
