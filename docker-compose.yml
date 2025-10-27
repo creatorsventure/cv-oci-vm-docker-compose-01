@@ -200,7 +200,7 @@ services:
       - "traefik.http.routers.qbittorrent.tls=true"
       - "traefik.http.routers.qbittorrent.tls.certresolver=le"
       - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
-      - "traefik.http.routers.qbittorrent.middlewares=secure-headers@file,rate-limit@file"
+      - "traefik.http.routers.qbittorrent.middlewares=rate-limit@file"
       # Basic auth (optional) -> create user:pass with `htpasswd -nb user pass` then use the base64
       # - "traefik.http.routers.qbittorrent.middlewares=auth"
       # - "traefik.http.middlewares.auth.basicauth.users=USER:HASHEDPASSWORD"
