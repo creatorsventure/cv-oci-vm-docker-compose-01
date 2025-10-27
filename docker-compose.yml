@@ -150,8 +150,8 @@ services:
       - PLEX_CLAIM=claim-fZeoxKyRqhHG3H6tqzzs # Get from https://plex.tv/claim (valid 4 mins)
       - ADVERTISE_IP=http://10.9.9.1:32400/,http://10.20.20.102:32400/,https://plex.oci.creatorsventure.com:32400/
       - HOSTNAME=plex-server
-      - PLEX_UID=1000
-      - PLEX_GID=1000
+      - PLEX_UID=${HOST_UID}
+      - PLEX_GID=${HOST_GID}
     volumes:
       - ${DOCKER_DATA_ROOT}/plex-data/config:/config
       - ${DOCKER_DATA_ROOT}/plex-data/transcode:/transcode
@@ -175,8 +175,8 @@ services:
     container_name: qbittorrent
     restart: unless-stopped
     environment:
-      - PUID=1001 # your user id (host)
-      - PGID=1001 # your group id (host)
+      - PUID=${HOST_UID} # your user id (host)
+      - PGID=${HOST_GID} # your group id (host)
       - TZ=${TZ} # set your timezone
       - WEBUI_PORT=8080 # internal webui port
       # - UMASK_SET=022        # optional
@@ -209,11 +209,11 @@ services:
   filebrowser:
     image: filebrowser/filebrowser:latest
     container_name: filebrowser
-    user: "1001:1001" # adjust to your download folder owner
+    user: "${HOST_UID}:${HOST_GID}" # adjust to your download folder owner
     restart: unless-stopped
     environment:
-      - PUID=1001
-      - PGID=1001
+      - PUID=${HOST_UID}
+      - PGID=${HOST_GID}
       - TZ=${TZ}
     volumes:
       - ${DOCKER_DATA_ROOT}/filebrowser-data/config:/config
