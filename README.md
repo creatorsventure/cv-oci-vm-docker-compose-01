@@ -9,7 +9,7 @@ sudo apt update && sudo apt install -y apache2-utils
 # generate bcrypt htpasswd line (no file)
 htpasswd -nbB admin 'SuperSecretPassword'
 ```
-# 2. Ubuntu VM Setup
+## 2. Ubuntu VM Setup
 
 ```bash
 
