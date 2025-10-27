@@ -154,7 +154,7 @@ services:
     volumes:
       - ${DOCKER_DATA_ROOT}/plex-data/config:/config
       - ${DOCKER_DATA_ROOT}/plex-data/transcode:/transcode
-      - ${DOCKER_DATA_ROOT}/plex-data/media:/data
+      - ${MEDIA_DATA_ROOT}/qbit-data/downloads:/data
     #devices: # for gpu passthrew
       #- /dev/dri:/dev/dri
     labels:
