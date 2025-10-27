@@ -39,7 +39,7 @@ services:
       - "traefik.http.routers.traefik.tls.certresolver=le"
       - "traefik.http.routers.traefik.service=api@internal"
       # Attach file-provided middlewares (secure headers + basic auth)
-      - "traefik.http.routers.traefik.middlewares=dashboard-auth@file,secure-headers@file"
+      - "traefik.http.routers.traefik.middlewares=dashboard-auth@file,secure-headers@file,rate-limit@file"
 
   portainer:
     image: portainer/portainer-ce:latest
@@ -145,7 +145,7 @@ services:
      - traefik
      - wg-easy
     environment:
-      - TZ=Asia/Muscat
+      - TZ=${TZ}
       - PLEX_CLAIM=claim-fZeoxKyRqhHG3H6tqzzs # Get from https://plex.tv/claim (valid 4 mins)
       - ADVERTISE_IP=http://10.9.9.1:32400/,http://10.20.20.102:32400/,https://plex.oci.creatorsventure.com:32400/
       - HOSTNAME=plex-server
@@ -168,6 +168,42 @@ services:
     - "traefik.http.middlewares.plex-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
     # optional: add middlewares (basic auth, secure headers) if you want
     - "traefik.http.routers.plex.middlewares=rate-limit@file"
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    environment:
+      - PUID=1001              # your user id (host)
+      - PGID=1001              # your group id (host)
+      - TZ=${TZ}               # set your timezone
+      - WEBUI_PORT=8080        # internal webui port
+      # - UMASK_SET=022        # optional
+      # - QBITTORRENT_WEBUI_PORT=8080  # alternate var name older images
+    volumes:
+      - ${DOCKER_DATA_ROOT}/qbit-data/config:/config
+      - ${MEDIA_DATA_ROOT}/qbit-data/downloads:/downloads
+      - ${MEDIA_DATA_ROOT}/qbit-data/incomplete:/incomplete
+      - ${MEDIA_DATA_ROOT}/qbit-data/watch:/watch
+    # If you use docker's host network + direct port exposure:
+    # network_mode: "host"
+    ports:
+      - "6881:6881"        # bittorrent TCP
+      - "6881:6881/udp"    # bittorrent UDP (DHT/uTP)
+    networks:
+      - web
+    # Traefik v2 labels (if you use Traefik as reverse proxy)
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbittorrent.rule=Host(`${QBITTORRENT_HOST}`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls=true"
+      - "traefik.http.routers.qbittorrent.tls.certresolver=le"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
+      - "traefik.http.routers.qbittorrent.middlewares=secure-headers@file,rate-limit@file"
+      # Basic auth (optional) -> create user:pass with `htpasswd -nb user pass` then use the base64
+      # - "traefik.http.routers.qbittorrent.middlewares=auth"
+      # - "traefik.http.middlewares.auth.basicauth.users=USER:HASHEDPASSWORD"
 
 networks:
   web:

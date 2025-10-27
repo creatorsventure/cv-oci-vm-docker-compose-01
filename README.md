@@ -1,4 +1,4 @@
-# 🚀 Technical Info - Deploying & Testing Creator's Venture Site
+# 🚀 Technical Info - Deploying & Testing Dcoker Compose
 
 ## 1. To generate password
 
@@ -12,6 +12,14 @@ htpasswd -nbB admin 'SuperSecretPassword'
 ## 2. Ubuntu VM Setup
 
 ```bash
+
+# To get current user and group details
+id
+
+# Time Zone Setup
+tzselect
+sudo timedatectl set-timezone Asia/Kolkata
+
 
 # Update and Upgrade System Packages
 sudo apt update && sudo apt upgrade -y
@@ -47,6 +55,8 @@ sudo ufw allow 51820/udp     # WireGuard
 sudo ufw allow 51821/tcp    # WireGuard - HTTP page
 sudo ufw route allow in on wg0 out on enp0s6 # WireGuard NAT
 sudo ufw route allow in on enp0s6 out on wg0 # WireGuard NAT
+sudo ufw allow 6881/tcp # Qbittorrent
+sudo ufw allow 6881/udp # Qbittorrent
 
 # Enable IP forwarding on the host
 vi /etc/sysctl.conf
