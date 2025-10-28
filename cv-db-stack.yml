@@ -33,6 +33,7 @@ services:
     image: adminer:latest
     container_name: adminer
     restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}" # adjust to your download folder owner
     environment:
       # Adminer connects to DB by host; do NOT expose DB ports publicly
       ADMINER_DESIGN: "nette"
