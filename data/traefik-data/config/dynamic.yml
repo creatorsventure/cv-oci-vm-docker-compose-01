@@ -1,11 +1,10 @@
 # dynamic.yml
-# Middleware Configurations
+# Middleware Configuration
 http:
   middlewares:
     ipwhitelist-generic:
       ipWhiteList:
         sourceRange:
-          - "144.24.145.85" # Host public ip
           - "10.9.9.0/24" # your WireGuard subnet
           - "127.0.0.1/32" # optional, allow localhost
 
