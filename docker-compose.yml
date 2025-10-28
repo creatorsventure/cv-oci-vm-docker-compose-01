@@ -1,5 +1,5 @@
 #version: '3.8'
-name: cv-base-services
+name: cv-base-stack
 
 services:
   traefik:
@@ -7,6 +7,7 @@ services:
     container_name: traefik
     # profiles: ["infra"] # docker compose --profile infra config/up etc
     restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}"
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -25,7 +26,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - web
+      - cv-base-stack-network
     command:
       - "--certificatesresolvers.le.acme.email=${EMAIL}"
     extra_hosts:
@@ -47,6 +48,7 @@ services:
     container_name: portainer
     # profiles: ["infra"]
     restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}"
     depends_on:
       - traefik
     volumes:
@@ -63,46 +65,16 @@ services:
       # Add middlewares (make sure they exist in dynamic.yml)
       - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file"
     networks:
-      - web
+      - cv-base-stack-network
     healthcheck:
       disable: true
-
-  mariadb:
-    image: mariadb:latest
-    container_name: mariadb
-    restart: unless-stopped
-    depends_on:
-      - traefik
-      - wg-easy
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: fog
-      MYSQL_USER: fog
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    ports:
-      - "3306:3306"
-    volumes:
-      - ${DOCKER_DATA_ROOT}/mariadb-data/data:/var/lib/mysql:rw
-      - ${DOCKER_DATA_ROOT}/mariadb-data/config/maria.cnf:/etc/mysql/conf.d/my.cnf:ro
-      - ${DOCKER_DATA_ROOT}/mariadb-data/backups:/backups:rw
-      - ${DOCKER_DATA_ROOT}/mariadb-data/initdb:/docker-entrypoint-initdb.d:ro
-      - ${DOCKER_DATA_ROOT}/mariadb-data/log:/var/log/mysql
-    tmpfs:
-      - /var/run
-      - /var/lib/mysqltmp
-    networks:
-      - web
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   wg-easy:
     image: ghcr.io/wg-easy/wg-easy
     container_name: wg-easy
     # profiles: ["vpn"]
     restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}"
     network_mode: host # Required for better networking etc.
     cap_add:
       - NET_ADMIN
@@ -142,6 +114,7 @@ services:
     container_name: plex
     network_mode: host # Required for DLNA, Chromecast, discovery, etc.
     restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}"
     depends_on:
       - traefik
       - wg-easy
@@ -174,6 +147,7 @@ services:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
     restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}"
     environment:
       - PUID=${HOST_UID} # your user id (host)
       - PGID=${HOST_GID} # your group id (host)
@@ -192,7 +166,7 @@ services:
       - "6881:6881" # bittorrent TCP
       - "6881:6881/udp" # bittorrent UDP (DHT/uTP)
     networks:
-      - web
+      - cv-base-stack-network
     # Traefik v2 labels (if you use Traefik as reverse proxy)
     labels:
       - "traefik.enable=true"
@@ -229,8 +203,9 @@ services:
       - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
       - "traefik.http.routers.filebrowser.middlewares=rate-limit@file"
     networks:
-      - web
+      - cv-base-stack-network
 
 networks:
-  web:
+  cv-base-stack-network:
+    name: cv-base-stack-network
     driver: bridge

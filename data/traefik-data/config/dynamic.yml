@@ -1,6 +1,12 @@
 # dynamic.yml
 http:
   middlewares:
+    ipwhitelist-generic:
+      ipWhiteList:
+        sourceRange:
+          - "10.9.9.0/24" # your WireGuard subnet
+          - "127.0.0.1/32" # optional, allow localhost
+
     secure-headers:
       headers:
         frameDeny: true
@@ -17,8 +23,8 @@ http:
     # Adds rate limiting (basic protection against abuse)
     rate-limit:
       rateLimit:
-        average: 100    # average requests per second
-        burst: 50       # how many requests in a short burst
+        average: 100 # average requests per second
+        burst: 50 # how many requests in a short burst
 
     # Basic auth middleware for dashboard - replace the hashed password below
     dashboard-auth:
