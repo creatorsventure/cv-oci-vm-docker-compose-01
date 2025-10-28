@@ -38,7 +38,7 @@ services:
       # Adminer connects to DB by host; do NOT expose DB ports publicly
       ADMINER_DESIGN: "nette"
       # If you want to enable plugins, set ADMINER_PLUGINS and mount plugins dir
-      DMINER_PLUGINS: "tables-filter,header,capabilities"
+      # DMINER_PLUGINS: "tables-filter,header,capabilities"
     volumes:
       # optionally expose plugins folder:
       - ${DOCKER_DATA_ROOT}/adminer-data/plugins:/var/www/html/plugins-enabled:ro
