@@ -7,11 +7,10 @@ services:
     image: mariadb:latest
     container_name: mariadb
     restart: unless-stopped
-    user: "${HOST_UID}:${HOST_GID}"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: fog
-      MYSQL_USER: fog
+      MYSQL_DATABASE: rootdb
+      MYSQL_USER: root
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
@@ -36,7 +35,6 @@ services:
     image: adminer:latest
     container_name: adminer
     restart: unless-stopped
-    user: "${HOST_UID}:${HOST_GID}"
     environment:
       # Adminer connects to DB by host; do NOT expose DB ports publicly
       ADMINER_DESIGN: "nette"
