@@ -40,7 +40,6 @@ services:
       # If you want to enable plugins, set ADMINER_PLUGINS and mount plugins dir
       DMINER_PLUGINS: "tables-filter,header,capabilities"
     volumes:
-      - ${DOCKER_DATA_ROOT}/adminer-data/site:/var/www/html:rw
       # optionally expose plugins folder:
       - ${DOCKER_DATA_ROOT}/adminer-data/plugins:/var/www/html/plugins-enabled:ro
     networks:
