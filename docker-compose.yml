@@ -1,13 +1,23 @@
 #version: '3.8'
 name: cv-base-stack
 
+# Common snippts 
+x-common-user: &common-user-permission
+  user: "${HOST_UID}:${HOST_GID}"
+  group_add:
+    - "${HOST_DOCKER_GID}"  # docker group on host
+  environment:
+    - PUID=${HOST_UID}
+    - PGID=${HOST_GID}
+    - TZ=${TZ}
+
 services:
   traefik:
     image: traefik:latest
     container_name: traefik
     # profiles: ["infra"] # docker compose --profile infra config/up etc
     restart: unless-stopped
-    user: "${HOST_UID}:${HOST_GID}"
+    <<: *common-user-permission
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -18,8 +28,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      - TZ=${TZ:-UTC}
     healthcheck:
       test: [ "CMD", "traefik", "healthcheck" ]
       interval: 30s
@@ -48,7 +56,7 @@ services:
     container_name: portainer
     # profiles: ["infra"]
     restart: unless-stopped
-    user: "${HOST_UID}:${HOST_GID}"
+    <<: *common-user-permission
     depends_on:
       - traefik
     volumes:
@@ -74,7 +82,7 @@ services:
     container_name: wg-easy
     # profiles: ["vpn"]
     restart: unless-stopped
-    user: "${HOST_UID}:${HOST_GID}"
+    <<: *common-user-permission
     network_mode: host # Required for better networking etc.
     cap_add:
       - NET_ADMIN
@@ -114,12 +122,11 @@ services:
     container_name: plex
     network_mode: host # Required for DLNA, Chromecast, discovery, etc.
     restart: unless-stopped
-    user: "${HOST_UID}:${HOST_GID}"
+    <<: *common-user-permission
     depends_on:
       - traefik
       - wg-easy
     environment:
-      - TZ=${TZ}
       - PLEX_CLAIM=claim-fZeoxKyRqhHG3H6tqzzs # Get from https://plex.tv/claim (valid 4 mins)
       - ADVERTISE_IP=http://10.9.9.1:32400/,http://10.20.20.148:32400/,https://plex.oci.creatorsventure.com:32400/
       - HOSTNAME=plex-server
@@ -147,7 +154,7 @@ services:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
     restart: unless-stopped
-    user: "${HOST_UID}:${HOST_GID}"
+    <<: *common-user-permission
     environment:
       - PUID=${HOST_UID} # your user id (host)
       - PGID=${HOST_GID} # your group id (host)
@@ -183,7 +190,7 @@ services:
   filebrowser:
     image: filebrowser/filebrowser:latest
     container_name: filebrowser
-    user: "${HOST_UID}:${HOST_GID}" # adjust to your download folder owner
+    <<: *common-user-permission
     restart: unless-stopped
     environment:
       - PUID=${HOST_UID}
