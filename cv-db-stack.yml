@@ -1,4 +1,5 @@
 #version: '3.8'
+# DB related containers
 name: cv-db-stack
 
 services:
