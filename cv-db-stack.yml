@@ -58,8 +58,8 @@ services:
       - "traefik.http.routers.adminer.tls.certresolver=le"
       - "traefik.http.services.adminer.loadbalancer.server.port=8080"
       # Use your Traefik file provider to create 'secure-adminer' that has basicAuth
-      #- "traefik.http.routers.adminer.middlewares=ipwhitelist-generic@file,rate-limit@file"
-      - "traefik.http.routers.adminer.middlewares=rate-limit@file"
+      - "traefik.http.routers.adminer.middlewares=ipwhitelist-generic@file,rate-limit@file"
+      #- "traefik.http.routers.adminer.middlewares=rate-limit@file"
       # Optional: restrict access to a subnet (e.g., your office or wireguard)
       # - "traefik.http.routers.adminer.middlewares=ipwhitelist@file,secure-adminer@file"
 
