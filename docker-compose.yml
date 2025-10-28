@@ -178,6 +178,7 @@ services:
     image: filebrowser/filebrowser:latest
     container_name: filebrowser
     restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}" # adjust to your download folder owner
     environment:
       - PUID=${HOST_UID}
       - PGID=${HOST_GID}
