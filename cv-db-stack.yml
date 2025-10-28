@@ -20,9 +20,6 @@ services:
       - ${DOCKER_DATA_ROOT}/mariadb-data/backups:/backups:rw
       - ${DOCKER_DATA_ROOT}/mariadb-data/initdb:/docker-entrypoint-initdb.d:ro
       - ${DOCKER_DATA_ROOT}/mariadb-data/log:/var/log/mysql
-    tmpfs:
-      - /var/run
-      - /var/lib/mysqltmp
     networks:
       - cv-db-stack-network
     healthcheck:
