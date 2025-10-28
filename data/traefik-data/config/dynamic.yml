@@ -1,4 +1,5 @@
 # dynamic.yml
+# Middleware Configurations of traefik
 http:
   middlewares:
     ipwhitelist-generic:

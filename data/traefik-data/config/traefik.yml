@@ -1,4 +1,5 @@
 # traefik.yml
+# Base Configurations of traefik
 api:
   dashboard: true
   insecure: false
