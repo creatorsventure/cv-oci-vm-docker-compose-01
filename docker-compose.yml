@@ -5,6 +5,7 @@ services:
   traefik:
     image: traefik:latest
     container_name: traefik
+    # Profile is used to run only the profile name matched containers
     # profiles: ["infra"] # docker compose --profile infra config/up etc
     restart: unless-stopped
     security_opt:
