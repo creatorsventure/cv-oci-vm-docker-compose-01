@@ -106,38 +106,6 @@ services:
       # prefer HTTP healthcheck against the UI if present
       disable: true
 
-  plex:
-    image: plexinc/pms-docker:latest
-    container_name: plex
-    network_mode: host # Required for DLNA, Chromecast, discovery, etc.
-    restart: unless-stopped
-    depends_on:
-      - traefik
-    environment:
-      - TZ=${TZ}
-      - PLEX_CLAIM=claim-fZeoxKyRqhHG3H6tqzzs # Get from https://plex.tv/claim (valid 4 mins)
-      - ADVERTISE_IP=http://10.9.9.1:32400/,http://10.20.20.148:32400/,https://plex.oci.creatorsventure.com:32400/
-      - HOSTNAME=plex-server
-      - PLEX_UID=${HOST_UID}
-      - PLEX_GID=${HOST_GID}
-    volumes:
-      - ${DOCKER_DATA_ROOT}/plex-data/config:/config
-      - ${DOCKER_DATA_ROOT}/plex-data/transcode:/transcode
-      - ${MEDIA_DATA_ROOT}/qbit-data/downloads:/data
-      #devices: # for gpu passthrew
-      #- /dev/dri:/dev/dri
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.plex.rule=Host(`${PLEX_HOST}`)"
-      - "traefik.http.routers.plex.entrypoints=websecure"
-      - "traefik.http.routers.plex.tls=true"
-      - "traefik.http.routers.plex.tls.certresolver=le"
-      # proxy to the host's plex port
-      - "traefik.http.services.plex.loadbalancer.server.url=http://host.docker.internal:32400"
-      - "traefik.http.middlewares.plex-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      # optional: add middlewares (basic auth, secure headers) if you want
-      - "traefik.http.routers.plex.middlewares=rate-limit@file"
-
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
@@ -151,9 +119,9 @@ services:
       # - QBITTORRENT_WEBUI_PORT=8080  # alternate var name older images
     volumes:
       - ${DOCKER_DATA_ROOT}/qbit-data/config:/config
-      - ${MEDIA_DATA_ROOT}/qbit-data/downloads:/downloads
-      - ${MEDIA_DATA_ROOT}/qbit-data/incomplete:/incomplete
-      - ${MEDIA_DATA_ROOT}/qbit-data/watch:/watch
+      - ${QBITTORRENT_LIBRARY_ROOT}/qbit-data/downloads:/downloads
+      - ${QBITTORRENT_LIBRARY_ROOT}/qbit-data/incomplete:/incomplete
+      - ${QBITTORRENT_LIBRARY_ROOT}/qbit-data/watch:/watch
     # If you use docker's host network + direct port exposure:
     # network_mode: "host"
     ports:
@@ -186,8 +154,8 @@ services:
     volumes:
       - ${DOCKER_DATA_ROOT}/filebrowser-data/config:/config
       - ${DOCKER_DATA_ROOT}/filebrowser-data/database:/database
-      - ${FILE_BROWSER_DATA_01}:/srv
-      - ${FILE_BROWSER_DATA_02}:/srv/home # your mounted media drive path
+      - ${FILE_BROWSER_LOCATION_01}:/srv
+      - ${FILE_BROWSER_LOCATION_02}:/srv/home # your mounted media drive path
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.filebrowser.rule=Host(`${FILE_BROWSER_HOST}`)"
@@ -198,6 +166,40 @@ services:
       - "traefik.http.routers.filebrowser.middlewares=rate-limit@file"
     networks:
       - cv-base-stack-network
+
+  plex:
+    image: plexinc/pms-docker:latest
+    container_name: plex
+    network_mode: host # Required for DLNA, Chromecast, discovery, etc.
+    restart: unless-stopped
+    depends_on:
+      - traefik
+      - qbittorrent
+      - filebrowser
+    environment:
+      - TZ=${TZ}
+      - PLEX_CLAIM=claim-fZeoxKyRqhHG3H6tqzzs # Get from https://plex.tv/claim (valid 4 mins)
+      - ADVERTISE_IP=http://10.9.9.1:32400/,http://10.20.20.148:32400/,https://plex.oci.creatorsventure.com:32400/
+      - HOSTNAME=plex-server
+      - PLEX_UID=${HOST_UID}
+      - PLEX_GID=${HOST_GID}
+    volumes:
+      - ${DOCKER_DATA_ROOT}/plex-data/config:/config
+      - ${DOCKER_DATA_ROOT}/plex-data/transcode:/transcode
+      - ${QBITTORRENT_LIBRARY_ROOT}/qbit-data/downloads:/data
+      #devices: # for gpu passthrew
+      #- /dev/dri:/dev/dri
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex.rule=Host(`${PLEX_HOST}`)"
+      - "traefik.http.routers.plex.entrypoints=websecure"
+      - "traefik.http.routers.plex.tls=true"
+      - "traefik.http.routers.plex.tls.certresolver=le"
+      # proxy to the host's plex port
+      - "traefik.http.services.plex.loadbalancer.server.url=http://host.docker.internal:32400"
+      - "traefik.http.middlewares.plex-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      # optional: add middlewares (basic auth, secure headers) if you want
+      - "traefik.http.routers.plex.middlewares=rate-limit@file"
 
 networks:
   cv-base-stack-network:
