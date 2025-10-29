@@ -4,44 +4,6 @@ name: cv-base-stack
 
 services:
 
-  dnsmasq:
-    image: 4km3/dnsmasq:latest
-    container_name: dnsmasq
-    restart: unless-stopped
-    network_mode: "host"
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    volumes:
-      - ${DOCKER_CONFIG_ROOT}/dnsmasq-data/config:/etc/dnsmasq.d:ro
-      - ${DOCKER_DATA_ROOT}/dnsmasq-data/tftp:/var/lib/tftpboot:ro
-      - ${DOCKER_DATA_ROOT}/dnsmasq-data/log:/var/log/dnsmasq:rw
-    environment:
-      - TZ=${TZ}
-    command:
-      # always keep DNS enabled
-      - "--keep-in-foreground"
-      - "--log-facility=/var/log/dnsmasq/dnsmasq.log"
-      - "--domain-needed"
-      - "--bogus-priv"
-      - "--no-resolv"
-      - "--server=1.1.1.1"
-      - "--server=8.8.8.8"
-      - "--bind-interfaces"
-      - "--listen-address=127.0.0.1,10.9.9.1"
-      # PXE/DHCP disabled by default
-      - "--conf-dir=/etc/dnsmasq.d"
-    healthcheck:
-      test: [ "CMD-SHELL", "dig @127.0.0.1 google.com +time=2 +tries=1 >/dev/null 2>&1 || exit 1" ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-
   traefik:
     image: traefik:latest
     container_name: traefik
@@ -83,30 +45,6 @@ services:
       # Attach file-provided middlewares (secure headers + basic auth)
       - "traefik.http.routers.traefik.middlewares=dashboard-auth@file,secure-headers@file,rate-limit@file"
 
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    # profiles: ["infra"]
-    restart: unless-stopped
-    depends_on:
-      - traefik
-    volumes:
-      - "${DOCKER_DATA_ROOT}/portainer-data/data:/data:rw"
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_HOST}`)"
-      - "traefik.http.routers.portainer.entrypoints=websecure"
-      - "traefik.http.routers.portainer.tls=true"
-      - "traefik.http.routers.portainer.tls.certresolver=le"
-      # Explicit server port inside the container (Portainer default is 9000)
-      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
-      # Add middlewares (make sure they exist in dynamic.yml)
-      - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file"
-    networks:
-      - cv-base-stack-network
-    healthcheck:
-      disable: true
 
   wg-easy:
     image: ghcr.io/wg-easy/wg-easy
@@ -114,6 +52,8 @@ services:
     # profiles: ["vpn"]
     restart: unless-stopped
     network_mode: host # Required for better networking etc.
+    depends_on:
+      - traefik
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -147,10 +87,77 @@ services:
       # prefer HTTP healthcheck against the UI if present
       disable: true
 
+  dnsmasq:
+    image: 4km3/dnsmasq:latest
+    container_name: dnsmasq
+    restart: unless-stopped
+    network_mode: "host"
+    depends_on:
+      - wg-easy
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ${DOCKER_CONFIG_ROOT}/dnsmasq-data/config:/etc/dnsmasq.d:ro
+      - ${DOCKER_DATA_ROOT}/dnsmasq-data/tftp:/var/lib/tftpboot:ro
+      - ${DOCKER_DATA_ROOT}/dnsmasq-data/log:/var/log/dnsmasq:rw
+    environment:
+      - TZ=${TZ}
+    command:
+      # always keep DNS enabled
+      - "--keep-in-foreground"
+      - "--log-facility=/var/log/dnsmasq/dnsmasq.log"
+      - "--domain-needed"
+      - "--bogus-priv"
+      - "--no-resolv"
+      - "--server=1.1.1.1"
+      - "--server=8.8.8.8"
+      - "--bind-interfaces"
+      - "--listen-address=127.0.0.1,10.9.9.1"
+      # PXE/DHCP disabled by default
+      - "--conf-dir=/etc/dnsmasq.d"
+    healthcheck:
+      test: [ "CMD-SHELL", "dig @127.0.0.1 google.com +time=2 +tries=1 >/dev/null 2>&1 || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    # profiles: ["infra"]
+    restart: unless-stopped
+    depends_on:
+      - traefik
+    volumes:
+      - "${DOCKER_DATA_ROOT}/portainer-data/data:/data:rw"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_HOST}`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=le"
+      # Explicit server port inside the container (Portainer default is 9000)
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      # Add middlewares (make sure they exist in dynamic.yml)
+      - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file"
+    networks:
+      - cv-base-stack-network
+    healthcheck:
+      disable: true
+
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
     restart: unless-stopped
+    depends_on:
+      - traefik
     environment:
       - PUID=${HOST_UID} # your user id (host)
       - PGID=${HOST_GID} # your group id (host)
@@ -188,6 +195,8 @@ services:
     container_name: filebrowser
     restart: unless-stopped
     user: "${HOST_UID}:${HOST_GID}" # adjust to your download folder owner
+    depends_on:
+      - traefik
     environment:
       - PUID=${HOST_UID}
       - PGID=${HOST_GID}
