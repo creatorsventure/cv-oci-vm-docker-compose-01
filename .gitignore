@@ -86,7 +86,7 @@ cache/
 wgeasy/config/
 wgeasy/peers/
 wgeasy/peer-configs/
-*.conf
+# *.conf
 *.wg0
 *.wg1
 
