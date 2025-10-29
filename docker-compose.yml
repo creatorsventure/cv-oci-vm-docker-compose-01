@@ -3,6 +3,45 @@
 name: cv-base-stack
 
 services:
+
+  dnsmasq:
+    image: 4km3/dnsmasq:latest
+    container_name: dnsmasq
+    restart: unless-stopped
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ${DOCKER_CONFIG_ROOT}/dnsmasq-data/config:/etc/dnsmasq.d:ro
+      - ${DOCKER_DATA_ROOT}/dnsmasq-data/tftp:/var/lib/tftpboot:ro
+      - ${DOCKER_DATA_ROOT}/dnsmasq-data/log:/var/log/dnsmasq:rw
+    environment:
+      - TZ=${TZ}
+    command:
+      # always keep DNS enabled
+      - "--keep-in-foreground"
+      - "--log-facility=/var/log/dnsmasq/dnsmasq.log"
+      - "--domain-needed"
+      - "--bogus-priv"
+      - "--no-resolv"
+      - "--server=1.1.1.1"
+      - "--server=8.8.8.8"
+      - "--bind-interfaces"
+      - "--listen-address=127.0.0.1,10.9.9.1"
+      # PXE/DHCP disabled by default
+      - "--conf-dir=/etc/dnsmasq.d"
+    healthcheck:
+      test: [ "CMD-SHELL", "dig @127.0.0.1 google.com +time=2 +tries=1 >/dev/null 2>&1 || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   traefik:
     image: traefik:latest
     container_name: traefik
@@ -12,7 +51,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - "${DOCKER_DATA_ROOT}/traefik-data/config:/etc/traefik:rw"
+      - "${DOCKER_CONFIG_ROOT}/traefik-data/config:/etc/traefik:rw"
       - "${DOCKER_DATA_ROOT}/traefik-data/config/acme.json:/acme.json"
       - "${DOCKER_DATA_ROOT}/traefik-data/log:/var/log/traefik:rw"
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -52,7 +91,7 @@ services:
     depends_on:
       - traefik
     volumes:
-      - "${DOCKER_DATA_ROOT}/portainer-data/config:/data:rw"
+      - "${DOCKER_DATA_ROOT}/portainer-data/data:/data:rw"
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
       - "traefik.enable=true"
@@ -88,7 +127,7 @@ services:
       # Optional: set WG_PORT if you want a non-default inside container
       # - WG_PORT=51820
     volumes:
-      - "${DOCKER_DATA_ROOT}/wgeasy-data/config:/etc/wireguard:rw"
+      - "${DOCKER_DATA_ROOT}/wgeasy-data/data:/etc/wireguard:rw"
       - "${DOCKER_DATA_ROOT}/wgeasy-data/log:/var/log/wgeasy:rw"
       # expose UDP WireGuard port on host (required)
       #ports: # Enable if bridge network mode used because host mode automatically bind
@@ -154,7 +193,7 @@ services:
       - PGID=${HOST_GID}
       - TZ=${TZ}
     volumes:
-      - ${DOCKER_DATA_ROOT}/filebrowser-data/config:/config
+      - ${DOCKER_DATA_ROOT}/filebrowser-data/data:/config
       - ${DOCKER_DATA_ROOT}/filebrowser-data/database:/database
       - ${FILE_BROWSER_LOCATION_01}:/srv
       - ${FILE_BROWSER_LOCATION_02}:/srv/home # your mounted media drive path
