@@ -2,6 +2,15 @@
 # CV Base containers 
 name: cv-base-stack
 
+# Common snipets
+x-common-logging: &common-logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+      tag: "{{.Name}}"
+
 services:
 
   traefik:
@@ -10,6 +19,7 @@ services:
     # Profile is used to run only the profile name matched containers
     # profiles: ["infra"] # docker compose --profile infra config/up etc
     restart: unless-stopped
+    <<: [ *common-logging ]
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -45,13 +55,13 @@ services:
       # Attach file-provided middlewares (secure headers + basic auth)
       - "traefik.http.routers.traefik.middlewares=dashboard-auth@file,secure-headers@file,rate-limit@file"
 
-
   wg-easy:
     image: ghcr.io/wg-easy/wg-easy
     container_name: wg-easy
     # profiles: ["vpn"]
     restart: unless-stopped
     network_mode: host # Required for better networking etc.
+    <<: [ *common-logging ]
     depends_on:
       - traefik
     cap_add:
@@ -91,6 +101,7 @@ services:
     image: 4km3/dnsmasq:latest
     container_name: dnsmasq
     restart: unless-stopped
+    <<: [ *common-logging ]
     network_mode: "host"
     depends_on:
       - wg-easy
@@ -106,32 +117,19 @@ services:
     command:
       # always keep DNS enabled
       - "--keep-in-foreground"
-      - "--log-facility=/var/log/dnsmasq/dnsmasq.log"
-      - "--domain-needed"
-      - "--bogus-priv"
-      - "--no-resolv"
-      - "--server=1.1.1.1"
-      - "--server=8.8.8.8"
-      - "--bind-interfaces"
-      - "--listen-address=127.0.0.1,10.9.9.1"
-      # PXE/DHCP disabled by default
       - "--conf-dir=/etc/dnsmasq.d"
     healthcheck:
-      test: [ "CMD-SHELL", "dig @127.0.0.1 google.com +time=2 +tries=1 >/dev/null 2>&1 || exit 1" ]
+      test: [ "CMD-SHELL", "nslookup google.com 127.0.0.1 >/dev/null 2>&1 || exit 1" ]
       interval: 30s
       timeout: 5s
       retries: 3
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
     # profiles: ["infra"]
     restart: unless-stopped
+    <<: [ *common-logging ]
     depends_on:
       - traefik
     volumes:
@@ -156,6 +154,7 @@ services:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
     restart: unless-stopped
+    <<: [ *common-logging ]
     depends_on:
       - traefik
     environment:
@@ -194,6 +193,7 @@ services:
     image: filebrowser/filebrowser:latest
     container_name: filebrowser
     restart: unless-stopped
+    <<: [ *common-logging ]
     user: "${HOST_UID}:${HOST_GID}" # adjust to your download folder owner
     depends_on:
       - traefik
@@ -222,6 +222,7 @@ services:
     container_name: plex
     network_mode: host # Required for DLNA, Chromecast, discovery, etc.
     restart: unless-stopped
+    <<: [ *common-logging ]
     depends_on:
       - traefik
       - qbittorrent
