@@ -49,14 +49,25 @@ sudo ufw status verbose
 sudo ufw status numbered
 
 # Rules
-sudo ufw allow 32400/tcp     # Plex
-sudo ufw allow 80,443/tcp    # HTTP/HTTPS
-sudo ufw allow 51820/udp     # WireGuard
-sudo ufw allow 51821/tcp    # WireGuard - HTTP page
-sudo ufw route allow in on wg0 out on enp0s6 # WireGuard NAT
-sudo ufw route allow in on enp0s6 out on wg0 # WireGuard NAT
-sudo ufw allow 6881/tcp # Qbittorrent
-sudo ufw allow 6881/udp # Qbittorrent
+
+# Plex
+sudo ufw allow 32400/tcp
+# Traefik (HTTP/HTTPS)
+sudo ufw allow 80,443/tcp
+# WireGuard (vpn port, Web UI, NAT)
+sudo ufw allow 51820/udp     
+sudo ufw allow 51821/tcp
+sudo ufw route allow in on wg0 out on enp0s6 
+sudo ufw route allow in on enp0s6 out on wg0
+# Qbittorrent
+sudo ufw allow 6881/tcp 
+sudo ufw allow 6881/udp
+# DNSMASQ (DNS Resolution on WireGuard VPN)
+sudo ufw allow in on wg0 to any port 53 proto udp 
+sudo ufw allow in on wg0 to any port 53 proto tcp
+sudo ufw allow out on wg0 to any port 53 proto udp
+sudo ufw allow out on wg0 to any port 53 proto tcp
+sudo ufw reload
 
 # Enable IP forwarding on the host
 vi /etc/sysctl.conf
