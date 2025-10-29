@@ -15,8 +15,8 @@ services:
     ports:
       - "3306:3306"
     volumes:
+      - ${DOCKER_CONFIG_ROOT}/mariadb-data/config/maria.cnf:/etc/mysql/conf.d/my.cnf:ro
       - ${DOCKER_DATA_ROOT}/mariadb-data/data:/var/lib/mysql:rw
-      - ${DOCKER_DATA_ROOT}/mariadb-data/config/maria.cnf:/etc/mysql/conf.d/my.cnf:ro
       - ${DOCKER_DATA_ROOT}/mariadb-data/backups:/backups:rw
       - ${DOCKER_DATA_ROOT}/mariadb-data/initdb:/docker-entrypoint-initdb.d:ro
       - ${DOCKER_DATA_ROOT}/mariadb-data/log:/var/log/mysql
