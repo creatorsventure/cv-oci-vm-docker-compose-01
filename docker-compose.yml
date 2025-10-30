@@ -169,14 +169,15 @@ services:
       - "${DOCKER_DATA_ROOT}/stepca-data/data:/home/step:rw"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.stepca.rule=Host(`${STEPCA_HOST}`)" # e.g. ca.vpn.oci.creatorsventure.com
+      - "traefik.http.routers.stepca.rule=Host(`${STEPCA_HOST}`)"
       - "traefik.http.routers.stepca.entrypoints=websecure"
       - "traefik.http.routers.stepca.tls=true"
-      - "traefik.http.routers.stepca.tls.certresolver=le" # or use your stepca resolver if internal
+      - "traefik.http.routers.stepca.tls.certresolver=le"
       - "traefik.http.routers.stepca.middlewares=secure-headers@file,rate-limit@file"
-      - "traefik.http.services.stepca.loadbalancer.server.scheme=https"
-      - "traefik.http.services.stepca.loadbalancer.server.tls.insecureSkipVerify=true"
-      - "traefik.http.services.stepca.loadbalancer.server.port=9000"
+      # Backend: speak to this backend URL (HTTPS)
+      - "traefik.http.services.stepca.loadbalancer.servers[0].url=https://step-ca:9000"
+      # Use a named ServersTransport that we'll define in dynamic.yml
+      - "traefik.http.services.stepca.loadbalancer.serversTransport=optional-insecure-transport"
     networks:
       - cv-base-stack-network
     healthcheck:

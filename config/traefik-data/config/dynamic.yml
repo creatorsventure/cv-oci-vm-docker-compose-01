@@ -2,6 +2,16 @@
 # Middleware Configuration
 http:
   middlewares:
+
+  serversTransports:
+    optional-insecure-transport:
+      # skip verify (dev/testing). Remove or set false for strict verification.
+      insecureSkipVerify: true
+
+      # OPTIONAL: if you want to provide a CA bundle instead of skipping:
+      # rootCAs:
+      #   - /certs/step-root.crt
+
     ipwhitelist-generic:
       ipWhiteList:
         sourceRange:
