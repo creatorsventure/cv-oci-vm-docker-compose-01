@@ -1,0 +1,160 @@
+#version: '3.8'
+# CV Base containers 
+name: cv-base-stack
+
+# Common snipets
+x-common-logging: &common-logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+      tag: "{{.Name}}"
+
+services:
+
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    # Profile is used to run only the profile name matched containers
+    # profiles: ["infra"] # docker compose --profile infra config/up etc
+    restart: unless-stopped
+    <<: [ *common-logging ]
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - "${DOCKER_CONFIG_ROOT}/traefik-data/config:/etc/traefik:rw"
+      - "${DOCKER_DATA_ROOT}/traefik-data/acme/acme.json:/acme.json"
+      - "${DOCKER_DATA_ROOT}/traefik-data/log:/var/log/traefik:rw"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ=${TZ:-UTC}
+    healthcheck:
+      test: [ "CMD", "traefik", "healthcheck" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - cv-base-stack-network
+    command:
+      - "--certificatesresolvers.le.acme.email=${EMAIL}"
+      - "--entrypoints.vpn.address=${WG_DEFAULT_DNS}:8443"
+    extra_hosts:
+      # To manage host network mode container accessiblity
+      - "host.docker.internal:host-gateway"
+    labels:
+      - "traefik.enable=true"
+      # Dashboard router (routes to Traefik internal api)
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=le"
+      - "traefik.http.routers.traefik.service=api@internal"
+      # Attach file-provided middlewares (secure headers + basic auth)
+      - "traefik.http.routers.traefik.middlewares=dashboard-auth@file,secure-headers@file,rate-limit@file"
+
+  wg-easy:
+    image: ghcr.io/wg-easy/wg-easy
+    container_name: wg-easy
+    # profiles: ["vpn"]
+    restart: unless-stopped
+    network_mode: host # Required for better networking etc.
+    <<: [ *common-logging ]
+    depends_on:
+      - traefik
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+      #sysctls: # Enable if bridge network mode used 
+      #- net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      - WG_HOST=${WG_HOST}
+      - PASSWORD_HASH=${WG_ADMIN_PASS}
+      - WG_DEFAULT_ADDRESS=${WG_DEFAULT_ADDRESS}
+      - WG_DEFAULT_DNS=${WG_DEFAULT_DNS}
+      # Optional: set WG_PORT if you want a non-default inside container
+      # - WG_PORT=51820
+    volumes:
+      - "${DOCKER_DATA_ROOT}/wgeasy-data/data:/etc/wireguard:rw"
+      - "${DOCKER_DATA_ROOT}/wgeasy-data/log:/var/log/wgeasy:rw"
+      # expose UDP WireGuard port on host (required)
+      #ports: # Enable if bridge network mode used because host mode automatically bind
+      #- "51820:51820/udp"
+      # do NOT publish 51821: let Traefik serve the UI via HTTPs instead
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wgeasy.rule=Host(`${WG_HOST}`)"
+      - "traefik.http.routers.wgeasy.entrypoints=websecure"
+      - "traefik.http.routers.wgeasy.tls=true"
+      - "traefik.http.routers.wgeasy.tls.certresolver=le"
+      - "traefik.http.services.wgeasy.loadbalancer.server.port=51821"
+      - "traefik.http.routers.wgeasy.middlewares=rate-limit@file"
+      #networks:
+      #- web
+    healthcheck:
+      # prefer HTTP healthcheck against the UI if present
+      disable: true
+
+  dnsmasq:
+    image: 4km3/dnsmasq:latest
+    container_name: dnsmasq
+    restart: unless-stopped
+    <<: [ *common-logging ]
+    network_mode: "host"
+    depends_on:
+      - wg-easy
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ${DOCKER_CONFIG_ROOT}/dnsmasq-data/config:/etc/dnsmasq.d:ro
+      - ${DOCKER_DATA_ROOT}/dnsmasq-data/tftp:/var/lib/tftpboot:ro
+      - ${DOCKER_DATA_ROOT}/dnsmasq-data/log:/var/log/dnsmasq:rw
+    environment:
+      - TZ=${TZ}
+    command:
+      # always keep DNS enabled
+      - "--keep-in-foreground"
+      - "--conf-dir=/etc/dnsmasq.d"
+      - "--listen-address=${WG_DEFAULT_DNS}"
+      - "--address=/vpn.oci.creatorsventure.com/${WG_DEFAULT_DNS}"
+    healthcheck:
+      # Change the nslookup ip as per dns listen-address
+      test: [ "CMD-SHELL", "nslookup google.com ${WG_DEFAULT_DNS} >/dev/null 2>&1 || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    # profiles: ["infra"]
+    restart: unless-stopped
+    <<: [ *common-logging ]
+    depends_on:
+      - traefik
+    volumes:
+      - "${DOCKER_DATA_ROOT}/portainer-data/data:/data:rw"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_HOST}`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=le"
+      # Explicit server port inside the container (Portainer default is 9000)
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      # Add middlewares (make sure they exist in dynamic.yml)
+      - "traefik.http.routers.portainer.middlewares=secure-headers@file,rate-limit@file"
+    networks:
+      - cv-base-stack-network
+    healthcheck:
+      disable: true
+
+networks:
+  cv-base-stack-network:
+    name: cv-base-stack-network
+    driver: bridge
