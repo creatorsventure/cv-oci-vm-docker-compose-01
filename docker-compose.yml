@@ -41,6 +41,7 @@ services:
       - cv-base-stack-network
     command:
       - "--certificatesresolvers.le.acme.email=${EMAIL}"
+      - "--entrypoints.vpn.address=${WG_DEFAULT_DNS}:8443"
     extra_hosts:
       # To manage host network mode container accessiblity
       - "host.docker.internal:host-gateway"
