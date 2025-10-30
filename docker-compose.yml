@@ -176,6 +176,7 @@ services:
       - "traefik.http.routers.stepca.tls.certresolver=le"
       - "traefik.http.routers.stepca.middlewares=secure-headers@file,rate-limit@file"
       - "traefik.http.routers.stepca.service=stepca@file"
+      - "traefik.http.services.stepca.loadbalancer.server.port=9000"
     networks:
       - cv-base-stack-network
     healthcheck:
