@@ -31,7 +31,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - TZ=${TZ:-UTC}
+      - TZ=${TZ}
     healthcheck:
       test: [ "CMD", "traefik", "healthcheck" ]
       interval: 30s
@@ -153,6 +153,30 @@ services:
       - cv-base-stack-network
     healthcheck:
       disable: true
+
+  step-ca:
+    image: smallstep/step-ca:latest
+    container_name: step-ca
+    restart: unless-stopped
+    <<: [ *common-logging ]
+    environment:
+      - TZ=${TZ}
+      - STEP_CA_PASSWORD=${STEP_CA_PASSWORD}
+    volumes:
+      - "${DOCKER_DATA_ROOT}/stepca-data/data:/home/step:rw"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.stepca.rule=Host(`${STEPCA_HOST}`)" # e.g. ca.vpn.oci.creatorsventure.com
+      - "traefik.http.routers.stepca.entrypoints=websecure"
+      - "traefik.http.routers.stepca.tls=true"
+      - "traefik.http.routers.stepca.tls.certresolver=le" # or use your stepca resolver if internal
+      - "traefik.http.services.stepca.loadbalancer.server.port=8443"
+      - "traefik.http.routers.stepca.middlewares=secure-headers@file,rate-limit@file"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fs https://localhost:8443/health || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
 
 networks:
   cv-base-stack-network:
