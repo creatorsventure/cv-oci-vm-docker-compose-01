@@ -26,7 +26,7 @@ services:
       - "${DOCKER_CONFIG_ROOT}/traefik-data/config:/etc/traefik:rw"
       - "${DOCKER_DATA_ROOT}/traefik-data/acme/acme.json:/acme.json"
       - "${DOCKER_DATA_ROOT}/traefik-data/log:/var/log/traefik:rw"
-      - "${DOCKER_DATA_ROOT}/stepca-data/data/certs/root_ca.crt:/certs/stepca-root.crt:ro"
+      - "${DOCKER_DATA_ROOT}/stepca-data/data/certs/root_ca.crt:/certs/stepca/root_ca.crt:ro"
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "80:80"
@@ -175,7 +175,7 @@ services:
       - "traefik.http.routers.stepca.tls=true"
       - "traefik.http.routers.stepca.tls.certresolver=le"
       - "traefik.http.routers.stepca.middlewares=secure-headers@file,rate-limit@file"
-      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - "traefik.http.routers.stepca.service=stepca@file"
     networks:
       - cv-base-stack-network
     healthcheck:

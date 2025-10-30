@@ -1,10 +1,22 @@
 # dynamic.yml
 # Middleware Configuration
 http:
+
+  # ServersTransport using mounted Step CA root
   serversTransports:
     transport-certs:
       rootCAs:
-        - /certs/stepca-root.crt
+        - /certs/stepca/root_ca.crt
+
+  # Define the backend service that Traefik should use for step-ca
+  services:
+    stepca:
+      loadBalancer:
+        servers:
+          - url: "https://step-ca:9000"
+        serversTransport: "transport-certs"
+
+  # Define the backend service that Traefik should use for step-ca
   middlewares:
     ipwhitelist-generic:
       ipWhiteList:
