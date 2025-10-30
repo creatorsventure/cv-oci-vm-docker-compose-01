@@ -5,6 +5,7 @@ http:
   # ServersTransport using mounted Step CA root
   serversTransports:
     transport-certs:
+      serverName: "localhost"
       rootCAs:
         - /certs/stepca/root_ca.crt
 
