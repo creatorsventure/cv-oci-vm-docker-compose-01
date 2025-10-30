@@ -162,6 +162,8 @@ services:
     environment:
       - TZ=${TZ}
       - STEP_CA_PASSWORD=${STEP_CA_PASSWORD}
+      - DOCKER_STEPCA_INIT_NAME=${DOMAIN_BASE}
+      - DOCKER_STEPCA_INIT_DNS_NAMES=localhost,${WG_DEFAULT_DNS}
     volumes:
       - "${DOCKER_DATA_ROOT}/stepca-data/data:/home/step:rw"
     labels:
