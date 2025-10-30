@@ -1,23 +1,19 @@
 # dynamic.yml
 # Middleware Configuration
 http:
+  serversTransports:
+    optional-insecure-transport:
+      # skip verify (dev/testing). Remove or set false for strict verification.
+      insecureSkipVerify: true
+      # OPTIONAL: if you want to provide a CA bundle instead of skipping:
+      # rootCAs:
+      #   - /certs/step-root.crt
   middlewares:
-
-    serversTransports:
-      optional-insecure-transport:
-        # skip verify (dev/testing). Remove or set false for strict verification.
-        insecureSkipVerify: true
-
-        # OPTIONAL: if you want to provide a CA bundle instead of skipping:
-        # rootCAs:
-        #   - /certs/step-root.crt
-
     ipwhitelist-generic:
       ipWhiteList:
         sourceRange:
           - "10.9.9.0/24" # your WireGuard subnet
           - "127.0.0.1/32" # optional, allow localhost
-
     secure-headers:
       headers:
         frameDeny: true
@@ -30,13 +26,11 @@ http:
         stsPreload: true
         referrerPolicy: "no-referrer-when-downgrade"
         contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https: wss:; img-src 'self' data:; font-src 'self' data:;"
-
     # Adds rate limiting (basic protection against abuse)
     rate-limit:
       rateLimit:
         average: 100 # average requests per second
         burst: 50 # how many requests in a short burst
-
     # Basic auth middleware for dashboard - replace the hashed password below
     dashboard-auth:
       basicAuth:

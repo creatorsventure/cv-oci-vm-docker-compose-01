@@ -174,10 +174,10 @@ services:
       - "traefik.http.routers.stepca.tls=true"
       - "traefik.http.routers.stepca.tls.certresolver=le"
       - "traefik.http.routers.stepca.middlewares=secure-headers@file,rate-limit@file"
-      # Backend: speak to this backend URL (HTTPS)
+      # tell Traefik to connect to backend using HTTPS explicitly
       - "traefik.http.services.stepca.loadbalancer.servers[0].url=https://step-ca:9000"
-      # Use a named ServersTransport that we'll define in dynamic.yml
-      - "traefik.http.services.stepca.loadbalancer.serversTransport=optional-insecure-transport"
+      # name the serversTransport (must match the name in dynamic.yml)
+      - "traefik.http.services.stepca.loadbalancer.serversTransport=optional-insecure-transport@file"
     networks:
       - cv-base-stack-network
     healthcheck:
