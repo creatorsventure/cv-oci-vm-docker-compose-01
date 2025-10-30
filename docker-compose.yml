@@ -159,6 +159,7 @@ services:
     container_name: step-ca
     restart: unless-stopped
     <<: [ *common-logging ]
+    user: "${HOST_UID}:${HOST_GID}"
     environment:
       - TZ=${TZ}
       - STEP_CA_PASSWORD=${STEP_CA_PASSWORD}
