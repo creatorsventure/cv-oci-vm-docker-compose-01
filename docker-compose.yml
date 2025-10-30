@@ -173,8 +173,10 @@ services:
       - "traefik.http.routers.stepca.entrypoints=websecure"
       - "traefik.http.routers.stepca.tls=true"
       - "traefik.http.routers.stepca.tls.certresolver=le" # or use your stepca resolver if internal
-      - "traefik.http.services.stepca.loadbalancer.server.port=9000"
       - "traefik.http.routers.stepca.middlewares=secure-headers@file,rate-limit@file"
+      - "traefik.http.services.stepca.loadbalancer.server.scheme=https"
+      - "traefik.http.services.stepca.loadbalancer.server.tls.insecureSkipVerify=true"
+      - "traefik.http.services.stepca.loadbalancer.server.port=9000"
     networks:
       - cv-base-stack-network
     healthcheck:
