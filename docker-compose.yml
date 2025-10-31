@@ -158,6 +158,8 @@ services:
     image: hashicorp/vault:latest
     container_name: vault
     restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
     depends_on:
       - traefik
     command: ["server", "-config=/vault/config/config.hcl"]
