@@ -164,9 +164,6 @@ services:
       - IPC_LOCK
     depends_on:
       - traefik
-    environment:
-      - VAULT_ADDR=http://0.0.0.0:8200
-      - VAULT_API_ADDR=http://vault:8200
     command: "server -config=/vault/config/config.hcl"
     volumes:
       - "${DOCKER_CONFIG_ROOT}/vault-data/config:/vault/config:rw"
@@ -180,6 +177,12 @@ services:
       - "traefik.http.routers.vault.tls.certresolver=le"
       - "traefik.http.routers.vault.middlewares=secure-headers@file,rate-limit@file"
       - "traefik.http.services.vault.loadbalancer.server.port=8200"
+      - "traefik.http.services.vault.loadbalancer.server.scheme=http"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://127.0.0.1:8200/v1/sys/health || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 networks:
   cv-base-stack-network:
