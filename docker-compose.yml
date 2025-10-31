@@ -158,6 +158,7 @@ services:
     image: hashicorp/vault:latest
     container_name: vault
     restart: unless-stopped
+    user: "${HOST_UID}:${HOST_GID}"
     cap_add:
       - IPC_LOCK
     depends_on:
