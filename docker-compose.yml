@@ -155,35 +155,31 @@ services:
     healthcheck:
       disable: true
 
-  step-ca:
-    image: smallstep/step-ca:latest
-    container_name: step-ca
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
     restart: unless-stopped
     <<: [ *common-logging ]
-    user: "${HOST_UID}:${HOST_GID}"
+    cap_add:
+      - IPC_LOCK
+    depends_on:
+      - traefik
     environment:
-      - TZ=${TZ}
-      - STEP_CA_PASSWORD=${STEP_CA_PASSWORD}
-      - DOCKER_STEPCA_INIT_NAME=${DOMAIN_BASE}
-      - DOCKER_STEPCA_INIT_DNS_NAMES=localhost,${WG_DEFAULT_DNS}
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://vault:8200
+    command: "server -config=/vault/config/config.hcl"
     volumes:
-      - "${DOCKER_DATA_ROOT}/stepca-data/data:/home/step:rw"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.stepca.rule=Host(`${STEPCA_HOST}`)"
-      - "traefik.http.routers.stepca.entrypoints=websecure"
-      - "traefik.http.routers.stepca.tls=true"
-      - "traefik.http.routers.stepca.tls.certresolver=le"
-      - "traefik.http.routers.stepca.middlewares=secure-headers@file,rate-limit@file"
-      - "traefik.http.routers.stepca.service=stepca@file"
-      - "traefik.http.services.stepca.loadbalancer.server.port=9000"
+      - "${DOCKER_CONFIG_ROOT}/vault-data/config:/vault/config:rw"
+      - "${DOCKER_DATA_ROOT}/vault-data/data:/vault/file:rw"
     networks:
       - cv-base-stack-network
-    healthcheck:
-      test: [ "CMD-SHELL", "step ca health --ca-url https://localhost:9000" ]
-      interval: 30s
-      timeout: 5s
-      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vault.rule=Host(`${VAULT_HOST}`)"
+      - "traefik.http.routers.vault.entrypoints=websecure"
+      - "traefik.http.routers.vault.tls.certresolver=le"
+      - "traefik.http.routers.vault.middlewares=secure-headers@file,rate-limit@file"
+      - "traefik.http.services.vault.loadbalancer.server.port=8200"
 
 networks:
   cv-base-stack-network:
