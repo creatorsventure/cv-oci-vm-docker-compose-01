@@ -162,7 +162,7 @@ services:
       - IPC_LOCK
     depends_on:
       - traefik
-    command: ["server", "-config=/vault/config/config.hcl"]
+    entrypoint: vault server -config=/vault/config/config.hcl
     environment:
       - VAULT_ADDR=http://127.0.0.1:8200        # matches listener port below
       - VAULT_API_ADDR=https://${VAULT_HOST}    # used by clients (Traefik)
