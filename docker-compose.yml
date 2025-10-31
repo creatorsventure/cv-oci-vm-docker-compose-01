@@ -166,6 +166,7 @@ services:
       - "server"
       - "-config=/vault/config/config.hcl"
     environment:
+      - VAULT_ADDR=http://127.0.0.1:8100
       - VAULT_API_ADDR=https://${VAULT_HOST}
     volumes:
       - "${DOCKER_CONFIG_ROOT}/vault-data/config:/vault/config:rw"
@@ -178,10 +179,10 @@ services:
       - "traefik.http.routers.vault.entrypoints=websecure"
       - "traefik.http.routers.vault.tls.certresolver=le"
       - "traefik.http.routers.vault.middlewares=secure-headers@file,rate-limit@file"
-      - "traefik.http.services.vault.loadbalancer.server.port=8200"
+      - "traefik.http.services.vault.loadbalancer.server.port=8100"
       - "traefik.http.services.vault.loadbalancer.server.scheme=http"
     healthcheck:
-      test: [ "CMD-SHELL", "vault status -address=http://127.0.0.1:8200 >/dev/null 2>&1 || exit 1" ]
+      test: [ "CMD-SHELL", "vault status -address=http://127.0.0.1:8100 >/dev/null 2>&1 || exit 1" ]
       interval: 30s
       timeout: 5s
       retries: 3
