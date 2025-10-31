@@ -165,7 +165,7 @@ services:
       - VAULT_ADDR=http://127.0.0.1:8200        # matches listener port below
       - VAULT_API_ADDR=https://${VAULT_HOST}    # used by clients (Traefik)
     volumes:
-      - "${DOCKER_CONFIG_ROOT}/vault-data/config:/vault/config:ro"
+      - "${DOCKER_CONFIG_ROOT}/vault-data/config:/vault/config:rw"
       - "${DOCKER_DATA_ROOT}/vault-data/data:/vault/file:rw"
     networks:
       - cv-base-stack-network
