@@ -163,7 +163,6 @@ services:
     depends_on:
       - traefik
     command:
-      - "server"
       - "-config=/vault/config/config.hcl"
     environment:
       - VAULT_ADDR=http://127.0.0.1:8100
