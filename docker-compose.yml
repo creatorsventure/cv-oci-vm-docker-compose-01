@@ -164,8 +164,8 @@ services:
     depends_on:
       - traefik
     command:
-    - "server"
-    - "-config=/vault/config/config.hcl"
+      - "server"
+      - "-config=/vault/config/config.hcl"
     environment:
       - VAULT_API_ADDR=https://${VAULT_HOST}
     volumes:
