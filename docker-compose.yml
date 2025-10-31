@@ -179,10 +179,7 @@ services:
       - "traefik.http.services.vault.loadbalancer.server.port=8200"
       - "traefik.http.services.vault.loadbalancer.server.scheme=http"
     healthcheck:
-      test: ["CMD-SHELL", "vault status -address=http://127.0.0.1:8200 >/dev/null 2>&1 || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      disable: true
 
 networks:
   cv-base-stack-network:
