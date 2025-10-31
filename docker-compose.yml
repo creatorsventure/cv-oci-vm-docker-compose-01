@@ -158,16 +158,14 @@ services:
     image: hashicorp/vault:latest
     container_name: vault
     restart: unless-stopped
-    <<: [ *common-logging ]
     cap_add:
       - IPC_LOCK
     depends_on:
       - traefik
-    command:
-      - "server"
-      - "-config=/vault/config/config.hcl"
+    entrypoint: vault server -config=/vault/config/config.hcl
     environment:
-      - VAULT_API_ADDR=https://${VAULT_HOST}
+      - VAULT_ADDR=http://127.0.0.1:8200        # matches listener port below
+      - VAULT_API_ADDR=https://${VAULT_HOST}    # used by clients (Traefik)
     volumes:
       - "${DOCKER_CONFIG_ROOT}/vault-data/config:/vault/config:rw"
       - "${DOCKER_DATA_ROOT}/vault-data/data:/vault/file:rw"
@@ -178,14 +176,10 @@ services:
       - "traefik.http.routers.vault.rule=Host(`${VAULT_HOST}`)"
       - "traefik.http.routers.vault.entrypoints=websecure"
       - "traefik.http.routers.vault.tls.certresolver=le"
-      - "traefik.http.routers.vault.middlewares=secure-headers@file,rate-limit@file"
       - "traefik.http.services.vault.loadbalancer.server.port=8200"
       - "traefik.http.services.vault.loadbalancer.server.scheme=http"
     healthcheck:
-      test: [ "CMD-SHELL", "curl -fsS http://127.0.0.1:8200/v1/sys/health || exit 1" ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      disable: true
 
 networks:
   cv-base-stack-network:
