@@ -96,7 +96,7 @@ services:
       - PLEX_GID=${HOST_GID}
     volumes:
       - ${DOCKER_DATA_ROOT}/plex-data/data:/config
-      - ${DOCKER_DATA_ROOT}/plex-data/transcode:/transcode
+      - /mnt/ramcache:/transcode:rw
       - ${QBITTORRENT_LIBRARY_ROOT}/qbit-data/downloads:/data
       #devices: # for gpu passthrew
       #- /dev/dri:/dev/dri
