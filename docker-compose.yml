@@ -20,6 +20,10 @@ services:
     # profiles: ["infra"] # docker compose --profile infra config/up etc
     restart: unless-stopped
     <<: [ *common-logging ]
+    dns:
+      - ${WG_DEFAULT_DNS}
+      - 1.1.1.1
+      - 8.8.8.8
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -120,6 +124,7 @@ services:
       - "--keep-in-foreground"
       - "--conf-dir=/etc/dnsmasq.d"
       - "--listen-address=${WG_DEFAULT_DNS}"
+      - "--listen-address=127.0.0.1"
       - "--address=/vpn.oci.creatorsventure.com/${WG_DEFAULT_DNS}"
     healthcheck:
       # Change the nslookup ip as per dns listen-address
@@ -164,8 +169,8 @@ services:
       - traefik
     entrypoint: vault server -config=/vault/config/config.hcl
     environment:
-      - VAULT_ADDR=http://127.0.0.1:8200        # matches listener port below
-      - VAULT_API_ADDR=https://${VAULT_HOST}    # used by clients (Traefik)
+      - VAULT_ADDR=http://127.0.0.1:8200 # matches listener port below
+      - VAULT_API_ADDR=https://${VAULT_HOST} # used by clients (Traefik)
     volumes:
       - "${DOCKER_CONFIG_ROOT}/vault-data/config:/vault/config:rw"
       - "${DOCKER_DATA_ROOT}/vault-data/data:/vault/file:rw"
