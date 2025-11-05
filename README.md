@@ -92,20 +92,13 @@ COMMIT
 # Reload firewall
 sudo ufw reload
 
-# Configure dnsmasq to the host level alternate dns 
-# dnsmasq runs on 127.0.0.1 53
-# systemd-resolvd ubuntu's default dns runs on 127.0.0.53
-
-# 127.0.0.55/32 - The IP address being added: • 127.0.0.2 = another loopback address (within 127.0.0.0/8). • /32 = subnet mask 255.255.255.255 (single IP, no network).
-# dev lo - Specifies the device (network interface) to attach the address to — here lo is the loopback interface.
-
-sudo ip addr add 127.0.0.55/32 dev lo
-
+# Configure dnsmasq to the host level to route our domains 
 sudo mkdir -p /etc/systemd/resolved.conf.d
-sudo vi /etc/systemd/resolved.conf.d/vpn.conf
+sudo nano /etc/systemd/resolved.conf.d/vpn.conf
 
 [Resolve]
-DNS=127.0.0.55 1.1.1.1 8.8.8.8
+# 10.9.9.1 is your dnsmasq on wg0
+DNS=10.9.9.1
 Domains=~vpn.oci.creatorsventure.com
 
 sudo systemctl restart systemd-resolved
