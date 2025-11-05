@@ -92,6 +92,22 @@ COMMIT
 # Reload firewall
 sudo ufw reload
 
+# Configure dnsmasq to the host level alternate dns 
+# dnsmasq runs on 127.0.0.1 53
+# systemd-resolvd ubuntu's default dns runs on 127.0.0.53
+
+sudo mkdir -p /etc/systemd/resolved.conf.d
+sudo vi /etc/systemd/resolved.conf.d/vpn.conf
+
+[Resolve]
+DNS=127.0.0.1
+Domains=~vpn.oci.creatorsventure.com
+
+sudo systemctl restart systemd-resolved
+
+resolvectl status
+
+
 # Apply & verify the config change
 sudo sysctl -p
 sysctl net.ipv4.ip_forward

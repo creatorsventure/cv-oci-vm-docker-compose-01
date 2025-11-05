@@ -124,7 +124,7 @@ services:
       - "--keep-in-foreground"
       - "--conf-dir=/etc/dnsmasq.d"
       - "--listen-address=${WG_DEFAULT_DNS}"
-      - "--listen-address=127.0.0.1"
+      - "--listen-address=127.0.0.55" # any new loop back ip. 
       - "--address=/vpn.oci.creatorsventure.com/${WG_DEFAULT_DNS}"
     healthcheck:
       # Change the nslookup ip as per dns listen-address
