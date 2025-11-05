@@ -20,15 +20,12 @@ services:
     # profiles: ["infra"] # docker compose --profile infra config/up etc
     restart: unless-stopped
     <<: [ *common-logging ]
-    dns:
-      - ${WG_DEFAULT_DNS}
-      - 1.1.1.1
-      - 8.8.8.8
     security_opt:
       - no-new-privileges:true
     volumes:
       - "${DOCKER_CONFIG_ROOT}/traefik-data/config:/etc/traefik:rw"
       - "${DOCKER_DATA_ROOT}/traefik-data/acme/acme.json:/acme.json"
+      - "${DOCKER_DATA_ROOT}/traefik-data/acme/acme-vault.json:/acme-vault.json"
       - "${DOCKER_DATA_ROOT}/traefik-data/log:/var/log/traefik:rw"
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
@@ -45,6 +42,7 @@ services:
       - cv-base-stack-network
     command:
       - "--certificatesresolvers.le.acme.email=${EMAIL}"
+      - "--certificatesresolvers.vault.acme.email=${EMAIL}"
       - "--entrypoints.vpn.address=${WG_DEFAULT_DNS}:8443"
     extra_hosts:
       # To manage host network mode container accessiblity
@@ -121,7 +119,7 @@ services:
       - ${DOCKER_DATA_ROOT}/dnsmasq-data/log:/var/log/dnsmasq:rw
     command:
       - "--conf-dir=/etc/dnsmasq.d"
-      - "--listen-address=${WG_DEFAULT_DNS}" 
+      - "--listen-address=${WG_DEFAULT_DNS}"
       # - "--listen-address=127.0.0.55"
       - "--address=/vpn.oci.creatorsventure.com/${WG_DEFAULT_DNS}"
     healthcheck:

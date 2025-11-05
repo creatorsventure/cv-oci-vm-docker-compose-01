@@ -104,6 +104,8 @@ Domains=~vpn.oci.creatorsventure.com
 sudo systemctl restart systemd-resolved
 
 resolvectl status
+dig adminer.vpn.oci.creatorsventure.com +short
+dig google.com +short
 
 
 # Apply & verify the config change

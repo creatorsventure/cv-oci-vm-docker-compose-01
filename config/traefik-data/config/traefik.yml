@@ -27,3 +27,10 @@ certificatesResolvers:
       storage: "/acme.json"
       httpChallenge:
         entryPoint: web
+
+  vault:   # new resolver that uses Vault ACME
+    acme:
+      caServer: "https://vault.oci.creatorsventure.com/v1/cv-intermediate-ca/acme/directory"
+      storage: "/acme-vault.json"
+      httpChallenge:
+        entryPoint: web
