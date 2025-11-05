@@ -106,29 +106,25 @@ services:
     image: 4km3/dnsmasq:latest
     container_name: dnsmasq
     restart: unless-stopped
-    <<: [ *common-logging ]
     network_mode: "host"
     depends_on:
+      - traefik
       - wg-easy
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    environment:
+      - TZ=${TZ}
     volumes:
       - ${DOCKER_CONFIG_ROOT}/dnsmasq-data/config:/etc/dnsmasq.d:ro
       - ${DOCKER_DATA_ROOT}/dnsmasq-data/tftp:/var/lib/tftpboot:ro
       - ${DOCKER_DATA_ROOT}/dnsmasq-data/log:/var/log/dnsmasq:rw
-    environment:
-      - TZ=${TZ}
     command:
-      # always keep DNS enabled
-      - "--keep-in-foreground"
       - "--conf-dir=/etc/dnsmasq.d"
-      - "--listen-address=${WG_DEFAULT_DNS}"
-      - "--server=1.1.1.1"
-      - "--server=8.8.8.8"
+      - "--listen-address=${WG_DEFAULT_DNS}" 
+      # - "--listen-address=127.0.0.55"
       - "--address=/vpn.oci.creatorsventure.com/${WG_DEFAULT_DNS}"
     healthcheck:
-      # Change the nslookup ip as per dns listen-address
       test: [ "CMD-SHELL", "nslookup google.com ${WG_DEFAULT_DNS} >/dev/null 2>&1 || exit 1" ]
       interval: 30s
       timeout: 5s
