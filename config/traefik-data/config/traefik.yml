@@ -27,3 +27,17 @@ certificatesResolvers:
       storage: "/acme.json"
       httpChallenge:
         entryPoint: web
+  vault:
+    acme:
+      # point to your Vault ACME directory endpoint
+      caServer: "https://vault.oci.creatorsventure.com/v1/cv-intermediate-ca/acme/directory"
+      storage: "/acme_vault.json"     # separate file OK (optional)
+      # choose challenge type carefully:
+      # - httpChallenge: requires the CA (Vault) to reach your domain over HTTP
+      # - dnsChallenge: requires DNS provider config for TXT records
+      httpChallenge:
+        entryPoint: web
+      # OR for DNS (example):
+      # dnsChallenge:
+      #   provider: "cloudflare"
+      #   delayBeforeCheck: 10

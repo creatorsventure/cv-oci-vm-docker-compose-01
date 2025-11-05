@@ -97,6 +97,7 @@ sudo sysctl -p
 sysctl net.ipv4.ip_forward
 sysctl net.ipv6.conf.all.forwarding
 
+
 # Dcoker Setup 
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y ca-certificates curl gnupg lsb-release
