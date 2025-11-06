@@ -166,6 +166,7 @@ services:
     environment:
       - VAULT_ADDR=http://127.0.0.1:8200 # matches listener port below
       - VAULT_API_ADDR=https://${VAULT_HOST} # used by clients (Traefik)
+      - VAULT_LOG_LEVEL=debug  
     volumes:
       - "${DOCKER_CONFIG_ROOT}/vault-data/config:/vault/config:rw"
       - "${DOCKER_DATA_ROOT}/vault-data/data:/vault/file:rw"
