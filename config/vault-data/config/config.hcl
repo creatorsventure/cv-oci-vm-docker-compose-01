@@ -9,10 +9,3 @@ storage "file" {
 
 ui = true
 disable_mlock = true
-
-# allow anonymous access to ACME endpoints for the cv-intermediate-ca mount
-unauthenticated_paths = [
-  "v1/cv-intermediate-ca/acme/*",
-  "v1/cv-intermediate-ca/acme/directory",
-  "v1/cv-intermediate-ca/acme/new-nonce"
-]
