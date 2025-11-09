@@ -7,6 +7,7 @@ http:
       ipWhiteList:
         sourceRange:
           - "10.9.9.0/24" # your WireGuard subnet
+          - "172.18.0.0/16"  # Docker internal
           - "127.0.0.1/32" # optional, allow localhost
     secure-headers:
       headers:
