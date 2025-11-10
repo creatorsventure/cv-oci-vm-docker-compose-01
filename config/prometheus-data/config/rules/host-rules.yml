@@ -1,0 +1,11 @@
+groups:
+  - name: host.rules
+    rules:
+      - alert: HighMemoryUsage
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.15
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host memory available < 15%"
+          description: "Memory available is below 15% for more than 2 minutes on {{ $labels.instance }}"
