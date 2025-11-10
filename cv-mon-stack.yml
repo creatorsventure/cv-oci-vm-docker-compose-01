@@ -106,9 +106,9 @@ services:
       - "traefik.http.routers.alertmanager.tls.certresolver=vault"
       # Use your Traefik file provider to create 'secure-adminer' that has basicAuth
       - "traefik.http.routers.alertmanager.middlewares=ipwhitelist-generic@file,rate-limit@file"
-  networks:
-      - cv-mon-stack-network
-      - cv-base-stack-network
+    networks:
+        - cv-mon-stack-network
+        - cv-base-stack-network
 
 
   # ---------------------------------------------------------------------
